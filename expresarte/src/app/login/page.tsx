@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser } from '@/app/api/apiServices';
 import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
@@ -15,16 +14,60 @@ export default function LoginPage() {
         e.preventDefault();
 
         try {
-            const data = await loginUser({ email: correo, password });
+            const res = await fetch('http://localhost:8000/api/login/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: correo, password }),
+            });
 
-            // ✅ Guardar los tokens correctamente
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || 'Error al iniciar sesión');
+
             localStorage.setItem('access_token', data.tokens.access);
             localStorage.setItem('refresh_token', data.tokens.refresh);
-
-            // ✅ Redirigir al perfil
             router.push('/perfil');
         } catch (err: any) {
             setError(err.message || 'Error al iniciar sesión');
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        try {
+            const res = await signIn('google', { redirect: false });
+            if (res?.error) throw new Error(res.error);
+
+            const sessionRes = await fetch('/api/auth/session');
+            const session = await sessionRes.json();
+
+            const { user } = session;
+            if (!user?.email) throw new Error('No se obtuvo el correo del usuario');
+
+            // 1. Guardar o actualizar en backend
+            await fetch('http://localhost:8000/api/usuarios/google/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: user.email,
+                    nombre: user.name || '',
+                    foto_url: user.image || '',
+                }),
+            });
+
+            // 2. Obtener tokens JWT desde backend
+            const tokenRes = await fetch('http://localhost:8000/api/token_google/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: user.email }),
+            });
+
+            const tokenData = await tokenRes.json();
+            if (!tokenRes.ok) throw new Error(tokenData.error || 'No se generaron los tokens');
+
+            localStorage.setItem('access_token', tokenData.access);
+            localStorage.setItem('refresh_token', tokenData.refresh);
+            router.push('/perfil');
+        } catch (err: any) {
+            setError(err.message || 'Error al iniciar con Google');
         }
     };
 
@@ -66,11 +109,9 @@ export default function LoginPage() {
                     </button>
                 </form>
 
-                {/* Botón de Google por fuera del form */}
+                {/* Botón de Google funcional */}
                 <button
-                    onClick={() =>
-                        signIn('google', { callbackUrl: '/perfil' })
-                    }
+                    onClick={handleGoogleLogin}
                     className="bg-red-600 text-white px-4 py-2 w-full rounded hover:bg-red-700 mt-4"
                 >
                     Iniciar con Google

@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from .models import Usuario, Categoria, Obra, Compra, Favorito, Mensaje, Notificacion, Log
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
@@ -17,7 +17,13 @@ class UsuarioActualView(APIView):
         usuario = request.user
         serializer = UsuarioSerializer(usuario)
         return Response(serializer.data)
-
+    
+    
+class GoogleLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    nombre = serializers.CharField()
+    foto_url = serializers.URLField(required=False, allow_blank=True)
+    google_id = serializers.CharField(required=False, allow_blank=True)
 
 class RegistroSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -45,3 +51,37 @@ class LoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
 
+class CategoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Categoria
+        fields = '__all__'
+
+class ObraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Obra
+        fields = '__all__'
+
+class CompraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Compra
+        fields = '__all__'
+
+class FavoritoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Favorito
+        fields = '__all__'
+
+class MensajeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Mensaje
+        fields = '__all__'
+
+class NotificacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notificacion
+        fields = '__all__'
+
+class LogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Log
+        fields = '__all__'

@@ -1,13 +1,17 @@
+# views.py (completo, corregido y adaptado a modelos actuales con soporte Google)
+from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view, permission_classes
-from .serializers import RegistroSerializer, LoginSerializer, UsuarioSerializer
-from .models import Usuario
+from rest_framework_simplejwt.tokens import RefreshToken
+from .models import Categoria, Obra, Compra, Favorito, Mensaje, Notificacion, Log, Usuario
+from .serializers import (
+    CategoriaSerializer, ObraSerializer, CompraSerializer, FavoritoSerializer,
+    MensajeSerializer, NotificacionSerializer, LogSerializer,
+    UsuarioSerializer, RegistroSerializer, LoginSerializer, GoogleLoginSerializer
+)
 
-# Función auxiliar para generar tokens JWT
+# Función auxiliar para obtener los tokens
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
     return {
@@ -15,65 +19,56 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token),
     }
 
+# Autenticación
 class RegistroView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         serializer = RegistroSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             tokens = get_tokens_for_user(user)
-            return Response({
-                "usuario": UsuarioSerializer(user).data,
-                "tokens": tokens
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"usuario": UsuarioSerializer(user).data, "tokens": tokens}, status=201)
+        return Response(serializer.errors, status=400)
 
 class LoginView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
             tokens = get_tokens_for_user(user)
-            return Response({
-                "usuario": UsuarioSerializer(user).data,
-                "tokens": tokens
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"usuario": UsuarioSerializer(user).data, "tokens": tokens}, status=200)
+        return Response(serializer.errors, status=400)
 
 class UsuarioActualView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        usuario = request.user
-        serializer = UsuarioSerializer(usuario)
-        return Response(serializer.data)
-    
+        return Response(UsuarioSerializer(request.user).data)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([permissions.AllowAny])
 def guardar_usuario_google(request):
-    serializer = UsuarioSerializer(data=request.data)
+    serializer = GoogleLoginSerializer(data=request.data)
     if serializer.is_valid():
         usuario, _ = Usuario.objects.update_or_create(
             email=serializer.validated_data['email'],
             defaults={
                 'nombre': serializer.validated_data.get('nombre', ''),
-                'foto_url': serializer.validated_data.get('foto_url', '')
+                'foto_url': serializer.validated_data.get('foto_url', ''),
+                'google_id': serializer.validated_data.get('google_id', None),
             }
         )
         tokens = get_tokens_for_user(usuario)
-        return Response({
-            "usuario": UsuarioSerializer(usuario).data,
-            "tokens": tokens
-        }, status=status.HTTP_200_OK)
+        return Response({"usuario": UsuarioSerializer(usuario).data, "tokens": tokens})
     return Response(serializer.errors, status=400)
 
 class TokenGoogleView(APIView):
     def post(self, request):
         email = request.data.get('email')
+
         if not email:
             return Response({"error": "Email requerido"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -83,6 +78,72 @@ class TokenGoogleView(APIView):
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh)
-            })
+            }, status=status.HTTP_200_OK)
         except Usuario.DoesNotExist:
             return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+# CRUD personalizados
+class CategoriaListCreateView(generics.ListCreateAPIView):
+    queryset = Categoria.objects.filter(visible=True)
+    serializer_class = CategoriaSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class CategoriaDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class ObraListCreateView(generics.ListCreateAPIView):
+    queryset = Obra.objects.filter(activo=True)
+    serializer_class = ObraSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class ObraDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Obra.objects.all()
+    serializer_class = ObraSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class CompraListCreateView(generics.ListCreateAPIView):
+    queryset = Compra.objects.all()
+    serializer_class = CompraSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class CompraDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Compra.objects.all()
+    serializer_class = CompraSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class FavoritoListCreateView(generics.ListCreateAPIView):
+    queryset = Favorito.objects.all()
+    serializer_class = FavoritoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class FavoritoDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Favorito.objects.all()
+    serializer_class = FavoritoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class MensajeListCreateView(generics.ListCreateAPIView):
+    queryset = Mensaje.objects.all()
+    serializer_class = MensajeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class MensajeDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Mensaje.objects.all()
+    serializer_class = MensajeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class NotificacionListCreateView(generics.ListCreateAPIView):
+    queryset = Notificacion.objects.all()
+    serializer_class = NotificacionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class NotificacionDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Notificacion.objects.all()
+    serializer_class = NotificacionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class LogListView(generics.ListAPIView):
+    queryset = Log.objects.all()
+    serializer_class = LogSerializer
+    permission_classes = [permissions.IsAdminUser]
