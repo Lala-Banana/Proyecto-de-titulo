@@ -2,14 +2,15 @@
 
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getSession } from 'next-auth/react';
 
 export default function PerfilPage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const [checkingToken, setCheckingToken] = useState(true);
 
-  // 🔁 Obtener token desde el backend si estamos logueados por NextAuth pero no tenemos token local
+  // Obtener token desde el backend si no hay y estamos logueados por NextAuth
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -20,7 +21,7 @@ export default function PerfilPage() {
         }
 
         try {
-          const res = await fetch('http://localhost:8000/api/token-google/', {
+          const res = await fetch('http://localhost:8000/api/token_google/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: session.user.email }),
@@ -30,7 +31,7 @@ export default function PerfilPage() {
             const data = await res.json();
             localStorage.setItem('access_token', data.access);
             localStorage.setItem('refresh_token', data.refresh);
-            window.location.reload(); // 🔁 Volvemos a cargar con todo listo
+            window.location.reload(); // volver a cargar el perfil
           } else {
             router.push('/login');
           }
@@ -38,16 +39,22 @@ export default function PerfilPage() {
           router.push('/login');
         }
       });
+    } else {
+      setCheckingToken(false);
     }
   }, []);
 
+  // Redirige solo cuando terminó todo
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !checkingToken) {
       router.push('/login');
     }
-  }, [user, loading]);
+  }, [user, loading, checkingToken]);
 
-  if (loading) return <p className="text-center mt-10">Cargando...</p>;
+  if (loading || checkingToken) {
+    return <p className="text-center mt-10">Cargando perfil...</p>;
+  }
+
   if (!user) return null;
 
   return (

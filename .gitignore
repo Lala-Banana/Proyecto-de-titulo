@@ -32,5 +32,5 @@ Thumbs.db
 !*/migrations/__init__.py
 
 # Entorno local
-.env
-.env.local
+#.env
+#.env.local

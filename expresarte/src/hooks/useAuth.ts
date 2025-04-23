@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { signOut } from 'next-auth/react';
 
 interface Usuario {
   email: string;
@@ -25,7 +26,6 @@ export function useAuth() {
       const data = await res.json();
       setUser(data);
     } catch (err) {
-      // Intenta refrescar si access falló
       const refresh = localStorage.getItem('refresh_token');
       if (!refresh) {
         logout();
@@ -43,7 +43,7 @@ export function useAuth() {
 
         const data = await res.json();
         localStorage.setItem('access_token', data.access);
-        await fetchUser(data.access); // reintenta con el nuevo token
+        await fetchUser(data.access);
       } catch {
         logout();
       }
@@ -65,7 +65,7 @@ export function useAuth() {
 
   useEffect(() => {
     const syncLogout = (e: StorageEvent) => {
-      if (e.key === 'access_token' && !e.newValue) {
+      if ((e.key === 'access_token' || e.key === 'refresh_token') && !e.newValue) {
         setUser(null);
       }
     };
@@ -77,6 +77,9 @@ export function useAuth() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     setUser(null);
+
+    // 🔁 Si estamos usando NextAuth, cerrar también su sesión
+    signOut({ callbackUrl: '/login' });
   };
 
   return { user, loading, logout };

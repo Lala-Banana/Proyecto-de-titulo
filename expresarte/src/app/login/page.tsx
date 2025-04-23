@@ -2,121 +2,154 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { signIn, getSession, signOut } from 'next-auth/react';
+import { FcGoogle } from 'react-icons/fc';
+import { FaFacebook } from 'react-icons/fa';
 
 export default function LoginPage() {
-    const router = useRouter();
-    const [correo, setCorreo] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+  const router = useRouter();
+  const [correo, setCorreo] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
 
-        try {
-            const res = await fetch('http://localhost:8000/api/login/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: correo, password }),
-            });
+    try {
+      const res = await fetch('http://localhost:8000/api/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: correo, password }),
+      });
 
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.detail || 'Error al iniciar sesión');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error al iniciar sesión');
 
-            localStorage.setItem('access_token', data.tokens.access);
-            localStorage.setItem('refresh_token', data.tokens.refresh);
-            router.push('/perfil');
-        } catch (err: any) {
-            setError(err.message || 'Error al iniciar sesión');
-        }
-    };
+      localStorage.setItem('access_token', data.tokens.access);
+      localStorage.setItem('refresh_token', data.tokens.refresh);
+      router.push('/profile');
+    } catch (err: any) {
+      setError(err.message || 'Error al iniciar sesión');
+    }
+  };
 
-    const handleGoogleLogin = async () => {
-        try {
-            const res = await signIn('google', { redirect: false });
-            if (res?.error) throw new Error(res.error);
+  const handleGoogleLogin = async () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    await signOut({ redirect: false });
 
-            const sessionRes = await fetch('/api/auth/session');
-            const session = await sessionRes.json();
+    const res = await signIn('google', { redirect: false });
+    if (res?.error) throw new Error(res.error);
 
-            const { user } = session;
-            if (!user?.email) throw new Error('No se obtuvo el correo del usuario');
+    let session = null;
+    for (let i = 0; i < 10; i++) {
+      session = await getSession();
+      if (session?.user?.email) break;
+      await new Promise((r) => setTimeout(r, 300));
+    }
 
-            // 1. Guardar o actualizar en backend
-            await fetch('http://localhost:8000/api/usuarios/google/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: user.email,
-                    nombre: user.name || '',
-                    foto_url: user.image || '',
-                }),
-            });
+    const { user } = session || {};
+    if (!user?.email) return;
 
-            // 2. Obtener tokens JWT desde backend
-            const tokenRes = await fetch('http://localhost:8000/api/token_google/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: user.email }),
-            });
+    await fetch('http://localhost:8000/api/usuarios/google/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: user.email,
+        nombre: user.name || '',
+        foto_url: user.image || '',
+      }),
+    });
 
-            const tokenData = await tokenRes.json();
-            if (!tokenRes.ok) throw new Error(tokenData.error || 'No se generaron los tokens');
+    const tokenRes = await fetch('http://localhost:8000/api/token_google/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email }),
+    });
 
-            localStorage.setItem('access_token', tokenData.access);
-            localStorage.setItem('refresh_token', tokenData.refresh);
-            router.push('/perfil');
-        } catch (err: any) {
-            setError(err.message || 'Error al iniciar con Google');
-        }
-    };
+    const tokenData = await tokenRes.json();
+    if (!tokenRes.ok) throw new Error(tokenData.error || 'No se generaron los tokens');
 
-    return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-md">
-                <form onSubmit={handleLogin}>
-                    <h1 className="text-black text-2xl font-bold mb-4 text-center">Iniciar sesión</h1>
+    localStorage.setItem('access_token', tokenData.access);
+    localStorage.setItem('refresh_token', tokenData.refresh);
+    router.push('/profile');
+  };
 
-                    {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div className="bg-gray-950 text-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+        <h1 className="text-3xl font-bold mb-6 text-center">Sign in</h1>
 
-                    <label className="block mb-2 text-black">
-                        Correo:
-                        <input
-                            type="email"
-                            value={correo}
-                            onChange={(e) => setCorreo(e.target.value)}
-                            required
-                            className="w-full p-2 mt-1 border rounded"
-                        />
-                    </label>
+        {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
 
-                    <label className="block mb-4 text-black">
-                        Contraseña:
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="w-full p-2 mt-1 border rounded"
-                        />
-                    </label>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="text-sm">Email</label>
+            <input
+              type="email"
+              value={correo}
+              onChange={(e) => setCorreo(e.target.value)}
+              required
+              className="w-full px-4 py-2 mt-1 rounded-md bg-gray-800 border border-gray-700 text-white"
+              placeholder="your@email.com"
+            />
+          </div>
 
-                    <button
-                        type="submit"
-                        className="bg-black text-white px-4 py-2 w-full rounded hover:bg-gray-800"
-                    >
-                        Iniciar sesión
-                    </button>
-                </form>
+          <div>
+            <label className="text-sm">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-4 py-2 mt-1 rounded-md bg-gray-800 border border-gray-700 text-white"
+              placeholder="••••••••"
+            />
+          </div>
 
-                {/* Botón de Google funcional */}
-                <button
-                    onClick={handleGoogleLogin}
-                    className="bg-red-600 text-white px-4 py-2 w-full rounded hover:bg-red-700 mt-4"
-                >
-                    Iniciar con Google
-                </button>
-            </div>
+          <div className="flex items-center justify-between text-sm text-gray-400">
+            <label className="flex items-center space-x-2">
+              <input type="checkbox" className="form-checkbox" />
+              <span>Remember me</span>
+            </label>
+            <a href="#" className="hover:underline">
+              Forgot your password?
+            </a>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-2 bg-white text-gray-900 font-semibold rounded hover:bg-gray-200"
+          >
+            Sign in
+          </button>
+        </form>
+
+        <div className="my-4 text-center text-gray-500 text-sm">or</div>
+
+        <div className="space-y-3">
+          <button
+            onClick={handleGoogleLogin}
+            className="flex items-center justify-center w-full py-2 bg-black border border-gray-600 rounded hover:bg-gray-800"
+          >
+            <FcGoogle className="mr-2" size={20} />
+            Sign in with Google
+          </button>
+
+          <button
+            className="flex items-center justify-center w-full py-2 bg-black border border-gray-600 rounded hover:bg-gray-800"
+          >
+            <FaFacebook className="mr-2 text-blue-500" size={20} />
+            Sign in with Facebook
+          </button>
         </div>
-    );
+
+        <p className="mt-6 text-center text-sm text-gray-400">
+          Don't have an account? <a href="#" className="text-white font-semibold underline">Sign up</a>
+        </p>
+      </div>
+    </div>
+  );
 }

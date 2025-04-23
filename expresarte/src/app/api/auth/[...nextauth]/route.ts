@@ -10,6 +10,7 @@ const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
+    // 🔁 Se ejecuta cuando el usuario inicia sesión con Google
     async signIn({
       user,
       account,
@@ -21,7 +22,7 @@ const authOptions: AuthOptions = {
     }) {
       try {
         if (profile && "sub" in profile) {
-          await fetch("http://localhost:8000/api/usuarios/google/", {
+          await fetch(`${process.env.BACKEND_URL || "http://localhost:8000"}/api/usuarios/google/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -35,7 +36,12 @@ const authOptions: AuthOptions = {
       } catch (error) {
         console.error("❌ Error enviando datos a Django:", error);
       }
-      return true;
+      return true; // continuar con el flujo de login
+    },
+
+    // ✅ Redirigir automáticamente al perfil
+    async redirect({ url, baseUrl }) {
+      return "/perfil";
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
