@@ -10,16 +10,7 @@ const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    // 🔁 Se ejecuta cuando el usuario inicia sesión con Google
-    async signIn({
-      user,
-      account,
-      profile,
-    }: {
-      user: User;
-      account: Account | null;
-      profile?: Profile;
-    }) {
+    async signIn({ user, account, profile }: { user: User; account: Account | null; profile?: Profile }) {
       try {
         if (profile && "sub" in profile) {
           await fetch(`${process.env.BACKEND_URL || "http://localhost:8000"}/api/usuarios/google/`, {
@@ -36,12 +27,29 @@ const authOptions: AuthOptions = {
       } catch (error) {
         console.error("❌ Error enviando datos a Django:", error);
       }
-      return true; // continuar con el flujo de login
+      return true;
     },
 
-    // ✅ Redirigir automáticamente al perfil
+    async jwt({ token, user }) {
+      if (user) {
+        token.nombre = user.name ?? undefined;
+        token.foto_url = user.image ?? undefined;
+        token.email = user.email ?? undefined;
+      }
+      return token;
+    },
+
+    async session({ session, token }) {
+      if (token) {
+        session.user.nombre = token.nombre;
+        session.user.foto_url = token.foto_url;
+        session.user.email = token.email;
+      }
+      return session;
+    },
+
     async redirect({ url, baseUrl }) {
-      return "/perfil";
+      return "/";
     },
   },
   secret: process.env.NEXTAUTH_SECRET,

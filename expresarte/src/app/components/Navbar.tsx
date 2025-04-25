@@ -2,11 +2,11 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/useAuth';
+import { useUser } from '@/context/UserContext';
 import { useState, useRef, useEffect } from 'react';
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useUser();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -19,6 +19,14 @@ export default function Navbar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // ✅ Verifica si aún se está cargando el usuario
+  if (loading) {
+    console.log('⏳ Cargando usuario desde contexto...');
+    return null; // o un spinner / navbar placeholder si lo deseas
+  }
+
+  console.log('👤 USER en Navbar:', user);
 
   return (
     <nav className="bg-white border-gray-200 dark:bg-gray-900">
@@ -36,7 +44,7 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Navegación */}
+        {/* Links de navegación */}
         <div className="hidden md:flex space-x-4">
           <Link href="/" className="text-blue-700 dark:text-blue-500 hover:underline">
             Home
@@ -46,13 +54,13 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Usuario */}
+        {/* Menú del usuario */}
         <div className="relative" ref={dropdownRef}>
           {user ? (
             <>
               <Image
                 className="rounded-full cursor-pointer"
-                src={user.foto_url}
+                src={user.foto_url || "/default-avatar.png"}
                 width={36}
                 height={36}
                 alt="User"
@@ -67,7 +75,7 @@ export default function Navbar() {
                   <ul className="py-2">
                     <li>
                       <Link
-                        href="/perfil"
+                        href="/profile"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Perfil

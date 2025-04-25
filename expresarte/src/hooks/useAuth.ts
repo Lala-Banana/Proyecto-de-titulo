@@ -13,56 +13,67 @@ export function useAuth() {
   const [user, setUser] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = async (token: string) => {
+  const fetchUser = async (accessToken: string) => {
     try {
       const res = await fetch('http://localhost:8000/api/me/', {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
 
-      if (!res.ok) throw new Error('Token inválido');
+      if (!res.ok) throw new Error('Access token inválido');
 
-      const data = await res.json();
-      setUser(data);
-    } catch (err) {
-      const refresh = localStorage.getItem('refresh_token');
-      if (!refresh) {
-        logout();
-        return;
-      }
-
-      try {
-        const res = await fetch('http://localhost:8000/api/token/refresh/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh }),
-        });
-
-        if (!res.ok) throw new Error('Refresh falló');
-
-        const data = await res.json();
-        localStorage.setItem('access_token', data.access);
-        await fetchUser(data.access);
-      } catch {
-        logout();
-      }
+      const userData = await res.json();
+      setUser(userData);
+    } catch (error) {
+      // Si falla el access_token, intenta refrescar
+      await tryRefreshToken();
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      setUser(null);
-      setLoading(false);
+  const tryRefreshToken = async () => {
+    const refresh = localStorage.getItem('refresh_token');
+    if (!refresh) {
+      handleLogout();
       return;
     }
 
-    fetchUser(token);
+    try {
+      const res = await fetch('http://localhost:8000/api/token/refresh/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh }),
+      });
+
+      if (!res.ok) throw new Error('Refresh token inválido');
+
+      const data = await res.json();
+      localStorage.setItem('access_token', data.access);
+      await fetchUser(data.access);
+    } catch {
+      handleLogout();
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    setUser(null);
+    signOut({ callbackUrl: '/' }); // Cierra sesión también en NextAuth
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      fetchUser(token);
+    } else {
+      setLoading(false);
+    }
   }, []);
 
+  // Sincroniza logout en otras pestañas
   useEffect(() => {
     const syncLogout = (e: StorageEvent) => {
       if ((e.key === 'access_token' || e.key === 'refresh_token') && !e.newValue) {
@@ -73,14 +84,5 @@ export function useAuth() {
     return () => window.removeEventListener('storage', syncLogout);
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    setUser(null);
-
-    // 🔁 Si estamos usando NextAuth, cerrar también su sesión
-    signOut({ callbackUrl: '/login' });
-  };
-
-  return { user, loading, logout };
+  return { user, loading, logout: handleLogout };
 }
