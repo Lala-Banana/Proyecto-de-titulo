@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { signIn, getSession, signOut } from 'next-auth/react';
 import { FcGoogle } from 'react-icons/fc';
 import { FaFacebook } from 'react-icons/fa';
+import { BASE_API } from '@/lib/api';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function LoginForm() {
     localStorage.removeItem('refresh_token');
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/login/`, {
+      const res = await fetch(`${BASE_API}/api/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: correo, password }),
@@ -57,7 +58,7 @@ export default function LoginForm() {
     const { user } = session || {};
     if (!user?.email) return;
 
-    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/usuarios/google/`, {
+    await fetch(`${BASE_API}/api/usuarios/google/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -67,7 +68,7 @@ export default function LoginForm() {
       }),
     });
 
-    const tokenRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/token_google/`, {
+    const tokenRes = await fetch(`${BASE_API}/api/token_google/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: user.email }),
