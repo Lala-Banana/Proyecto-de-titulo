@@ -12,8 +12,8 @@ const authOptions: AuthOptions = {
   callbacks: {
     async signIn({ user, account, profile }: { user: User; account: Account | null; profile?: Profile }) {
       try {
-        if (profile && "sub" in profile) {
-          await fetch(`${process.env.BACKEND_URL || "http://localhost:8000"}/api/usuarios/google/`, {
+        if (profile && "sub" in profile && user.email) {
+          const res = await fetch(`${process.env.BACKEND_URL || "http://localhost:8000"}/api/usuarios/google/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -23,9 +23,20 @@ const authOptions: AuthOptions = {
               google_id: profile.sub,
             }),
           });
+
+          const data = await res.json();
+          if (!res.ok || !data.tokens?.access) {
+            console.error("❌ Token no recibido desde Django:", data);
+            return false;
+          }
+
+          // Pasar tokens al callback jwt
+          (user as any).access_token = data.tokens.access;
+          (user as any).refresh_token = data.tokens.refresh;
         }
       } catch (error) {
         console.error("❌ Error enviando datos a Django:", error);
+        return false;
       }
       return true;
     },
@@ -35,6 +46,8 @@ const authOptions: AuthOptions = {
         token.nombre = user.name ?? undefined;
         token.foto_url = user.image ?? undefined;
         token.email = user.email ?? undefined;
+        token.access_token = (user as any).access_token;
+        token.refresh_token = (user as any).refresh_token;
       }
       return token;
     },
@@ -44,6 +57,8 @@ const authOptions: AuthOptions = {
         session.user.nombre = token.nombre;
         session.user.foto_url = token.foto_url;
         session.user.email = token.email;
+        (session as any).access_token = token.access_token;
+        (session as any).refresh_token = token.refresh_token;
       }
       return session;
     },

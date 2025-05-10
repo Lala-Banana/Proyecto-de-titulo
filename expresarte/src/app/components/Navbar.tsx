@@ -1,14 +1,24 @@
+// ✅ NAVBAR ADAPTADO CON CAMBIO DE COLOR
 'use client';
 
-import Image from 'next/image';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useUser } from '@/context/UserContext';
-import { useState, useRef, useEffect } from 'react';
 
-export default function Navbar() {
+const Navbar = () => {
   const { user, loading, logout } = useUser();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 80);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -20,72 +30,42 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // ✅ Verifica si aún se está cargando el usuario
-  if (loading) {
-    console.log('⏳ Cargando usuario desde contexto...');
-    return null; // o un spinner / navbar placeholder si lo deseas
-  }
-
-  console.log('👤 USER en Navbar:', user);
+  if (loading) return null;
 
   return (
-    <nav className="bg-white border-gray-200 dark:bg-gray-900">
-      <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-        {/* Logo */}
-        <Link href="/" className="flex items-center space-x-3 rtl:space-x-reverse">
-          <Image
-            src="https://img.freepik.com/foto-gratis/hermosa-composicion-collage-vintage_23-2149479769.jpg"
-            width={32}
-            height={32}
-            alt="ExpresArte Logo"
-          />
-          <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-            ExpresArte
-          </span>
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
+      scrolled ? 'bg-white shadow text-black' : 'bg-transparent text-white'
+    }`}> 
+      <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <Link href="/" className="flex items-center space-x-3">
+          <Image src="https://plus.unsplash.com/premium_vector-1718634329496-83c7a9db4913?q=80&w=2650&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Logo" width={36} height={36} />
+          <span className="text-2xl font-bold">ExpresArte</span>
         </Link>
-
-        {/* Links de navegación */}
-        <div className="hidden md:flex space-x-4">
-          <Link href="/" className="text-blue-700 dark:text-blue-500 hover:underline">
-            Home
-          </Link>
-          <Link href="/about" className="text-white hover:underline">
-            About
-          </Link>
-        </div>
-
-        {/* Menú del usuario */}
-        <div className="relative" ref={dropdownRef}>
+        <div className="flex items-center gap-4" ref={dropdownRef}>
           {user ? (
             <>
               <Image
-                className="rounded-full cursor-pointer"
-                src={user.foto_url || "/default-avatar.png"}
+                src={user.foto_url || '/default-avatar.png'}
+                alt="User"
                 width={36}
                 height={36}
-                alt="User"
+                className="rounded-full cursor-pointer"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               />
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
+                <div className="absolute right-4 mt-14 w-48 bg-white rounded-md shadow-lg text-black z-50">
                   <div className="p-4 border-b">
-                    <p className="text-sm font-medium text-gray-800">{user.nombre}</p>
+                    <p className="text-sm font-semibold">{user.nombre}</p>
                     <p className="text-xs text-gray-500">{user.email}</p>
                   </div>
                   <ul className="py-2">
                     <li>
-                      <Link
-                        href="/profile"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
+                      <Link href="/profile" className="block px-4 py-2 hover:bg-gray-100 text-sm">
                         Perfil
                       </Link>
                     </li>
                     <li>
-                      <button
-                        onClick={logout}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                      >
+                      <button onClick={logout} className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
                         Cerrar sesión
                       </button>
                     </li>
@@ -94,15 +74,19 @@ export default function Navbar() {
               )}
             </>
           ) : (
-            <Link
-              href="/login"
-              className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
-            >
-              Iniciar sesión
-            </Link>
+            <>
+              <Link href="/login" className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                Iniciar sesión
+              </Link>
+              <Link href="/register" className="border border-blue-600 text-blue-600 px-3 py-1 rounded text-sm hover:bg-blue-50">
+                Crear cuenta
+              </Link>
+            </>
           )}
         </div>
       </div>
     </nav>
   );
-}
+};
+
+export default Navbar;

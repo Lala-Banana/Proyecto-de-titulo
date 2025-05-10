@@ -35,6 +35,24 @@ class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
+        print("📥 Datos recibidos en login:", request.data)
+
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            tokens = get_tokens_for_user(user)
+            print("✅ Usuario autenticado:", user.email)
+            return Response({
+                "usuario": UsuarioSerializer(user).data,
+                "tokens": tokens
+            }, status=200)
+        
+        print("❌ Errores de validación:", serializer.errors)
+        return Response(serializer.errors, status=400)
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
@@ -94,9 +112,16 @@ class CategoriaDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 class ObraListCreateView(generics.ListCreateAPIView):
-    queryset = Obra.objects.filter(activo=True)
     serializer_class = ObraSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = Obra.objects.filter(activo=True)
+        usuario_id = self.request.query_params.get('usuario_id')
+        if usuario_id:
+            queryset = queryset.filter(usuario__id=usuario_id)
+        return queryset
+
 
 class ObraDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Obra.objects.all()
@@ -147,3 +172,29 @@ class LogListView(generics.ListAPIView):
     queryset = Log.objects.all()
     serializer_class = LogSerializer
     permission_classes = [permissions.IsAdminUser]
+
+#
+
+class ObrasPorCategoriaView(generics.ListAPIView):
+    serializer_class = ObraSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        categoria_slug = self.kwargs['slug']
+        queryset = Obra.objects.filter(categoria__slug=categoria_slug, activo=True)
+
+        usuario_id = self.request.query_params.get('usuario_id')
+        if usuario_id:
+            queryset = queryset.filter(usuario__id=usuario_id)
+
+        return queryset
+
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def mis_obras(request):
+    usuario = request.user
+    obras = Obra.objects.filter(usuario=usuario, activo=True)
+    serializer = ObraSerializer(obras, many=True)
+    return Response(serializer.data)

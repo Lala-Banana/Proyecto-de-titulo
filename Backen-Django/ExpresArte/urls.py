@@ -7,9 +7,11 @@ from .views import (
     CompraListCreateView, CompraDetailView,
     FavoritoListCreateView, FavoritoDetailView,
     MensajeListCreateView, MensajeDetailView,
-    NotificacionListCreateView, NotificacionDetailView,TokenGoogleView,
-    LogListView
+    NotificacionListCreateView, NotificacionDetailView, TokenGoogleView,
+    LogListView,
+    ObrasPorCategoriaView  # ← Correctamente agregado
 )
+
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
@@ -19,11 +21,15 @@ urlpatterns = [
     path('me/', UsuarioActualView.as_view(), name='usuario-actual'),
     path('usuarios/google/', guardar_usuario_google, name='guardar_usuario_google'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('token_google/', TokenGoogleView.as_view(), name='token_google'),  # <--- ESTA LÍNEA
+    path('token_google/', TokenGoogleView.as_view(), name='token_google'),
 
     # Categorías
     path('categorias/', CategoriaListCreateView.as_view(), name='categorias-list-create'),
+    path('categorias/<slug:slug>/', ObrasPorCategoriaView.as_view(), name='obras-por-categoria'),
     path('categorias/<int:pk>/', CategoriaDetailView.as_view(), name='categorias-detail'),
+
+
+
 
     # Obras
     path('obras/', ObraListCreateView.as_view(), name='obras-list-create'),
@@ -47,4 +53,5 @@ urlpatterns = [
 
     # Logs (solo lectura)
     path('logs/', LogListView.as_view(), name='logs-list'),
+    
 ]

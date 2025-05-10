@@ -45,7 +45,7 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        user = authenticate(username=data['email'], password=data['password'])
+        user = authenticate(email=data['email'], password=data['password'])
         if not user:
             raise serializers.ValidationError("Credenciales inválidas.")
         data['user'] = user
@@ -84,4 +84,10 @@ class NotificacionSerializer(serializers.ModelSerializer):
 class LogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Log
+        fields = '__all__'
+
+#LALA ==================
+class ObraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Obra
         fields = '__all__'

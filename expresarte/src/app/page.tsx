@@ -1,76 +1,79 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Navbar from './components/Navbar';
-import { useAuth } from '@/hooks/useAuth';
-import Image from 'next/image';
-import Link from 'next/link';
-
-interface Obra {
-  id: number;
-  titulo: string;
-  precio: number;
-  imagen_url: string;
-  en_venta: boolean;
-}
+import { useSession } from 'next-auth/react';
+import NavbarCombined from './components/Navbar';
+import Carrusel from './components/Carrusel';
+import Categorias from './components/Categorias';
+import Footer from './components/Footer';
 
 export default function HomePage() {
-  const [obras, setObras] = useState<Obra[]>([]);
-  const { user } = useAuth();
+  const { data: session } = useSession();
+  const [token, setToken] = useState<string | null>(null);
+  const [userInfo, setUserInfo] = useState<any>(null);
 
   useEffect(() => {
-    const fetchObras = async () => {
-      const res = await fetch('http://localhost:8000/api/obras/');
-      const data = await res.json();
-      setObras(data);
-    };
-    fetchObras();
-  }, []);
+    // 1. Token desde NextAuth (Google)
+    const nextAuthToken = (session as any)?.access_token;
+
+    // 2. Token desde localStorage (Login manual)
+    const manualToken = localStorage.getItem('access_token');
+
+    const finalToken = nextAuthToken || manualToken;
+    setToken(finalToken);
+    console.log('🔐 Token desde sesión o localStorage:', finalToken);
+
+    if (finalToken) {
+      const fetchUserInfo = async () => {
+        try {
+          const res = await fetch('http://localhost:8000/api/me/', {
+            headers: {
+              Authorization: `Bearer ${finalToken}`,
+            },
+          });
+
+          if (!res.ok) throw new Error('Error al obtener información del usuario');
+
+          const data = await res.json();
+          console.log('📥 Datos del usuario desde /api/me/:', data);
+          setUserInfo(data);
+        } catch (error) {
+          console.error('❌ Error en la petición /api/me/', error);
+        }
+      };
+
+      fetchUserInfo();
+    }
+  }, [session]);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <Navbar />
-      <div className="px-8 pt-10">
-        <h1 className="text-3xl font-bold text-center mb-10">
-          {user ? `Bienvenido, ${user.nombre}` : 'Explora obras de arte'}
-        </h1>
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <NavbarCombined />
+      <Carrusel />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {obras.map((obra) => (
-            <div
-              key={obra.id}
-              className="relative overflow-hidden rounded-xl shadow-lg group h-80 cursor-pointer"
-            >
-              <Image
-                src={obra.imagen_url}
-                alt={obra.titulo}
-                fill
-                className="object-cover z-0 group-hover:scale-105 transition-transform duration-300"
-              />
-              <div className="absolute inset-0 bg-black/50 z-10 flex flex-col justify-between p-4">
-                <div>
-                  <p className="text-xs uppercase text-gray-300 font-semibold">Obra</p>
-                  <h2 className="text-lg font-bold text-white leading-tight truncate">
-                    {obra.titulo}
-                  </h2>
-                </div>
-                <div className="flex justify-between items-center">
-                  <p className="text-lg font-semibold">${obra.precio}</p>
-                  {obra.en_venta ? (
-                    <Link href={`/comprar/${obra.id}`}>
-                      <button className="bg-blue-600 px-3 py-1 rounded-lg text-sm hover:bg-blue-700">
-                        Comprar
-                      </button>
-                    </Link>
-                  ) : (
-                    <span className="text-sm text-red-400">No disponible</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="px-4 md:px-8 mt-8">
+        <section className="mt-8">
+          <h2 className="text-2xl font-semibold text-center mb-4">Explora por categorías</h2>
+          <Categorias />
+        </section>
+
+        {token && (
+          <div className="mt-10 p-4 bg-white rounded-lg shadow text-sm">
+            <p><strong>🔐 Token:</strong></p>
+            <code className="break-words">{token}</code>
+          </div>
+        )}
+
+        {userInfo && (
+          <div className="mt-6 p-4 bg-green-50 border border-green-300 rounded-lg">
+            <p><strong>👤 Usuario autenticado:</strong></p>
+            <p>Nombre: {userInfo.nombre}</p>
+            <p>Email: {userInfo.email}</p>
+          </div>
+        )}
       </div>
+
+      <Footer />
     </div>
   );
 }
