@@ -21,6 +21,7 @@ interface User {
   email: string;
   foto_url: string;
   descripcion: string;
+  fondo?: string;
   seguidores?: number;
   me_gusta?: number;
 }
@@ -67,8 +68,7 @@ export default function ProfilePage() {
         if (!newToken) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
 
         setToken(newToken);
-
-        return await fetchUserAndObras(newToken); // retry con nuevo token
+        return await fetchUserAndObras(newToken);
       }
 
       if (!userRes.ok) throw new Error(await userRes.text());
@@ -97,7 +97,6 @@ export default function ProfilePage() {
     const init = async () => {
       let accessToken: string | null = null;
 
-      // Reintenta 3 veces con delay incremental
       for (let i = 0; i < 3; i++) {
         const session = await getSession();
 
@@ -139,11 +138,15 @@ export default function ProfilePage() {
       <NavbarCombined />
 
       <div className="relative min-h-screen">
+        {/* 🔁 Fondo dinámico según el perfil del usuario */}
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1415889455891-23bbf19ee5c7?q=80&w=1476&auto=format&fit=crop"
+            src={
+              user.fondo ||
+              'https://images.unsplash.com/photo-1415889455891-23bbf19ee5c7?q=80&w=1476&auto=format&fit=crop'
+            }
             alt="Fondo"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-opacity duration-500"
           />
           <div className="absolute inset-0 bg-black/40 backdrop-blur-none" />
         </div>

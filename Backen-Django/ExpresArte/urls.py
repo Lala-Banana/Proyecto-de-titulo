@@ -9,7 +9,9 @@ from .views import (
     MensajeListCreateView, MensajeDetailView,
     NotificacionListCreateView, NotificacionDetailView, TokenGoogleView,
     LogListView,
-    ObrasPorCategoriaView  # ← Correctamente agregado
+    ObrasPorCategoriaView , # ← Correctamente agregado
+    editar_perfil
+
 )
 
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -54,4 +56,7 @@ urlpatterns = [
     # Logs (solo lectura)
     path('logs/', LogListView.as_view(), name='logs-list'),
     
+    #EDITAR PERFIL
+    path('editar-perfil/', editar_perfil, name='editar_perfil'),
+
 ]

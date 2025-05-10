@@ -1,4 +1,4 @@
-# views.py (completo, corregido y adaptado a modelos actuales con soporte Google)
+# views.py (completo y corregido)
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -35,24 +35,6 @@ class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        print("📥 Datos recibidos en login:", request.data)
-
-        serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-            tokens = get_tokens_for_user(user)
-            print("✅ Usuario autenticado:", user.email)
-            return Response({
-                "usuario": UsuarioSerializer(user).data,
-                "tokens": tokens
-            }, status=200)
-        
-        print("❌ Errores de validación:", serializer.errors)
-        return Response(serializer.errors, status=400)
-
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
@@ -66,6 +48,25 @@ class UsuarioActualView(APIView):
     def get(self, request):
         return Response(UsuarioSerializer(request.user).data)
 
+# ✅ NUEVO: Editar perfil
+@api_view(['PUT'])
+@permission_classes([permissions.IsAuthenticated])
+def editar_perfil(request):
+    user = request.user
+    data = request.data
+
+    user.nombre = data.get('nombre', user.nombre)
+    user.descripcion = data.get('descripcion', user.descripcion)
+    user.foto_url = data.get('foto_url', user.foto_url)
+    user.fondo = data.get('fondo', getattr(user, 'fondo', ''))  # Este campo debe estar en el modelo
+
+    user.save()
+    return Response({
+        "mensaje": "Perfil actualizado correctamente.",
+        "usuario": UsuarioSerializer(user).data
+    })
+
+# Google Auth
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def guardar_usuario_google(request):
@@ -86,7 +87,6 @@ def guardar_usuario_google(request):
 class TokenGoogleView(APIView):
     def post(self, request):
         email = request.data.get('email')
-
         if not email:
             return Response({"error": "Email requerido"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -121,7 +121,6 @@ class ObraListCreateView(generics.ListCreateAPIView):
         if usuario_id:
             queryset = queryset.filter(usuario__id=usuario_id)
         return queryset
-
 
 class ObraDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Obra.objects.all()
@@ -173,8 +172,6 @@ class LogListView(generics.ListAPIView):
     serializer_class = LogSerializer
     permission_classes = [permissions.IsAdminUser]
 
-#
-
 class ObrasPorCategoriaView(generics.ListAPIView):
     serializer_class = ObraSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -182,14 +179,10 @@ class ObrasPorCategoriaView(generics.ListAPIView):
     def get_queryset(self):
         categoria_slug = self.kwargs['slug']
         queryset = Obra.objects.filter(categoria__slug=categoria_slug, activo=True)
-
         usuario_id = self.request.query_params.get('usuario_id')
         if usuario_id:
             queryset = queryset.filter(usuario__id=usuario_id)
-
         return queryset
-
-
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])

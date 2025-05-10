@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import ObrasGrid from './ObrasGrid';
 import CrearObraForm from './CrearObraForm';
+import { useRouter } from 'next/navigation';
 
 interface Obra {
   id: number;
@@ -41,6 +42,7 @@ export default function PerfilUsuario({
   activeTab,
   setActiveTab,
 }: Props) {
+  const router = useRouter(); // ✅ hook ahora dentro del componente
   const [cantidadVisible, setCantidadVisible] = useState(100);
   const [mostrarFormObra, setMostrarFormObra] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -68,16 +70,21 @@ export default function PerfilUsuario({
           <Image
             src={user.foto_url || '/default-avatar.png'}
             alt="Perfil"
-            width={250}
-            height={250}
-            className="border-4 border-black rounded-full shadow-md"
+            width={1080}
+            height={1080}
+            quality={100}
+            className="border-4 border-black rounded-full shadow-md object-cover"
+            style={{ width: 250, height: 250 }}
           />
-          <h2 className="text-2xl font-bold mt-4 text-center">{user.nombre}</h2>
+          <h2 className="text-2xl font-bold mt-4 text-center text-black">{user.nombre}</h2>
           <p className="text-sm text-gray-500">{user.region || 'Región no especificada'}</p>
           <p className="text-sm text-gray-600 text-center mb-4">{user.descripcion || 'Sin descripción'}</p>
 
           <div className="flex flex-col gap-4 mb-6 w-full">
-            <button className="bg-black text-white px-4 py-2 rounded hover:bg-rose-950 transition text-sm">
+            <button
+              onClick={() => router.push('/profile/editar')}
+              className="bg-black text-white px-4 py-2 rounded hover:bg-rose-950 transition text-sm"
+            >
               Editar perfil
             </button>
             <button

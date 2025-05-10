@@ -8,7 +8,7 @@ from .models import Usuario, Categoria, Obra, Compra, Favorito, Mensaje, Notific
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
-        fields = ['id', 'nombre', 'email', 'foto_url']
+        fields = ['id', 'nombre', 'email', 'foto_url','descripcion','fondo']
 
 class UsuarioActualView(APIView):
     permission_classes = [IsAuthenticated]

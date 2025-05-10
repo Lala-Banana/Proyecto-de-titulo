@@ -40,6 +40,9 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_modificacion = models.DateTimeField(auto_now=True)
+    fondo = models.URLField(null=True, blank=True, verbose_name='Fondo personalizado')
+
+
 
     objects = UsuarioManager()
 

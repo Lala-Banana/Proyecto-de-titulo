@@ -1,21 +1,51 @@
-// ✅ NAVBAR ADAPTADO CON CAMBIO DE COLOR
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useUser } from '@/context/UserContext';
+import { useRouter } from 'next/navigation';
+
+interface User {
+  id: number;
+  nombre: string;
+  email: string;
+  foto_url: string;
+}
 
 const Navbar = () => {
-  const { user, loading, logout } = useUser();
-  const [scrolled, setScrolled] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 80);
+    const fetchUser = async () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch('http://localhost:8000/api/me/', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+      }
+
+      setLoading(false);
     };
+
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 80);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -30,17 +60,25 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const logout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    setUser(null);
+    router.push('/');
+  };
+
   if (loading) return null;
 
   return (
     <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
       scrolled ? 'bg-white shadow text-black' : 'bg-transparent text-white'
-    }`}> 
+    }`}>
       <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
         <Link href="/" className="flex items-center space-x-3">
           <Image src="https://plus.unsplash.com/premium_vector-1718634329496-83c7a9db4913?q=80&w=2650&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Logo" width={36} height={36} />
           <span className="text-2xl font-bold">ExpresArte</span>
         </Link>
+
         <div className="flex items-center gap-4" ref={dropdownRef}>
           {user ? (
             <>

@@ -25,6 +25,7 @@ const authOptions: AuthOptions = {
           });
 
           const data = await res.json();
+          console.log("🔍 Respuesta backend Django:", data);
           if (!res.ok || !data.tokens?.access) {
             console.error("❌ Token no recibido desde Django:", data);
             return false;
