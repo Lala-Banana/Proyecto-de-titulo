@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getSession } from 'next-auth/react';
 
 interface User {
   nombre: string;
@@ -27,53 +28,96 @@ export default function EditarPerfil() {
     descripcion: '',
     foto_url: '',
     fondo: '',
+    
   });
-
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (!token) return;
+    const cargarUsuario = async () => {
+      let token = localStorage.getItem('access_token');
 
-    fetch('http://localhost:8000/api/me/', {
-      headers: {
-        Authorization: `Bearer ${token}`
+      // Si no hay token en localStorage, intenta obtenerlo desde NextAuth
+      if (!token) {
+        const session = await getSession();
+        if (session && (session as any).access_token) {
+          token = (session as any).access_token;
+          if (token) {
+            localStorage.setItem('access_token', token);
+          }
+        }
       }
-    })
-      .then(res => res.json())
-      .then(data => {
+
+      if (!token) {
+        console.warn('❌ Token no disponible ni en localStorage ni en sesión. Redirigiendo...');
+        alert('Debes iniciar sesión para editar tu perfil.');
+        router.push('/login');
+        return;
+      }
+
+      try {
+        const res = await fetch('http://localhost:8000/api/me/', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (!res.ok) throw new Error('Error al obtener usuario');
+
+        const data = await res.json();
+        console.log('👤 Usuario cargado:', data);
         setUser({
           nombre: data.nombre || '',
           descripcion: data.descripcion || '',
           foto_url: data.foto_url || '',
           fondo: data.fondo || ''
         });
-      });
-  }, []);
+      } catch (error) {
+        console.error('❌ Error al cargar usuario:', error);
+        alert('Error al obtener datos del perfil.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarUsuario();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem('access_token');
-    if (!token) return;
+    if (!token) {
+      alert('Sesión expirada. Inicia sesión nuevamente.');
+      router.push('/login');
+      return;
+    }
 
-    const res = await fetch('http://localhost:8000/api/editar-perfil/', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(user)
-    });
+    try {
+      const res = await fetch('http://localhost:8000/api/editar-perfil/', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(user)
+      });
 
-    if (res.ok) {
-      // ✅ Esperamos a que la actualización se guarde
-      await new Promise((r) => setTimeout(r, 300)); // pequeño delay opcional
-      router.push('/profile'); // redirige al perfil, que ya hace fetch de datos
-    } else {
-      const data = await res.json();
-      alert('Error al guardar: ' + JSON.stringify(data));
+      if (res.ok) {
+        console.log('✅ Perfil actualizado correctamente');
+        await new Promise((r) => setTimeout(r, 300));
+        router.push('/profile');
+      } else {
+        const data = await res.json();
+        console.error('❌ Error al guardar:', data);
+        alert('Error al guardar cambios: ' + (data.detail || JSON.stringify(data)));
+      }
+    } catch (error) {
+      console.error('❌ Error de red:', error);
+      alert('Error de conexión con el servidor.');
     }
   };
+
+  if (loading) return <p className="text-center py-8">Cargando perfil...</p>;
 
   return (
     <div className="max-w-2xl mx-auto p-8">

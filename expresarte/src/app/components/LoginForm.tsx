@@ -38,7 +38,8 @@ export default function LoginForm() {
         localStorage.setItem('access_token', access);
         localStorage.setItem('refresh_token', refresh);
         console.log('✅ Tokens guardados correctamente');
-        window.location.href = '/'; // redirección total
+          await signOut({ redirect: false }); // 🔁 limpia la sesión anterior de Google
+        window.location.href = '/';
       } else {
         setError('Tokens inválidos o incompletos');
         console.warn('⚠️ Tokens faltantes:', data);
@@ -50,57 +51,40 @@ export default function LoginForm() {
   };
 
   const handleGoogleLogin = async () => {
+    setError('');
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
-    await signOut({ redirect: false });
+    await signOut({ redirect: false }); // limpia sesión previa
 
     const res = await signIn('google', { redirect: false });
     if (res?.error) {
       console.error('❌ Error con Google SignIn:', res.error);
+      setError('Error al iniciar sesión con Google');
       return;
     }
 
+    // Esperar la sesión generada por NextAuth (máximo 10 intentos)
     let session = null;
     for (let i = 0; i < 10; i++) {
       session = await getSession();
-      if (session?.user?.email) break;
+      console.log(`🕐 Intento sesión ${i + 1}:`, session);
+      if (session?.user?.email && (session as any).access_token) break;
       await new Promise((r) => setTimeout(r, 300));
     }
 
-    const { user } = session || {};
-    if (!user?.email) {
-      setError('No se pudo recuperar la sesión de Google');
-      return;
+    if (
+      session &&
+      (session as any).access_token &&
+      (session as any).refresh_token
+    ) {
+      localStorage.setItem('access_token', (session as any).access_token);
+      localStorage.setItem('refresh_token', (session as any).refresh_token);
+      console.log('✅ Tokens de Google guardados');
+      window.location.href = '/';
+    } else {
+      console.error('❌ Tokens no disponibles en sesión:', session);
+      setError('No se pudieron recuperar los tokens desde la sesión de Google');
     }
-
-    await fetch('http://localhost:8000/api/usuarios/google/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: user.email,
-        nombre: user.name || '',
-        foto_url: user.image || '',
-      }),
-    });
-
-    const tokenRes = await fetch('http://localhost:8000/api/token_google/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: user.email }),
-    });
-
-    const tokenData = await tokenRes.json();
-    if (!tokenRes.ok || !tokenData.access || !tokenData.refresh) {
-      console.error('❌ Error al generar tokens:', tokenData);
-      setError('No se pudieron obtener los tokens');
-      return;
-    }
-
-    localStorage.setItem('access_token', tokenData.access);
-    localStorage.setItem('refresh_token', tokenData.refresh);
-    console.log('✅ Tokens guardados desde Google');
-
-    window.location.href = '/'; // redirección completa
   };
 
   return (

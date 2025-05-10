@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import PerfilUsuario from '../components/PerfilUsuario';
 import NavbarCombined from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -33,6 +34,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'venta' | 'noVenta'>('venta');
+  const router = useRouter();
 
   const refreshAccessToken = async () => {
     const refresh = localStorage.getItem('refresh_token');

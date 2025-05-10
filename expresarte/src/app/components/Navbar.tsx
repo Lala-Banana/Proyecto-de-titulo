@@ -4,9 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { getSession } from 'next-auth/react';
 
 interface User {
-  id: number;
+  id?: number;
   nombre: string;
   email: string;
   foto_url: string;
@@ -23,19 +24,33 @@ const Navbar = () => {
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem('access_token');
-      if (!token) {
-        setUser(null);
-        setLoading(false);
-        return;
+
+      if (token) {
+        try {
+          const res = await fetch('http://localhost:8000/api/me/', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            setUser(data);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error('❌ Error al obtener usuario desde backend:', e);
+        }
       }
 
-      const res = await fetch('http://localhost:8000/api/me/', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data);
+      // Si no hay token o falla, intentar con sesión de NextAuth
+      const session = await getSession();
+      console.log('📘 Sesión NextAuth en navbar:', session);
+      if (session?.user) {
+        setUser({
+          nombre: session.user.nombre || '',
+          email: session.user.email,
+          foto_url: session.user.foto_url || '/default-avatar.png',
+        });
       }
 
       setLoading(false);

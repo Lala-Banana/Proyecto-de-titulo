@@ -8,7 +8,22 @@ from .models import Usuario, Categoria, Obra, Compra, Favorito, Mensaje, Notific
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
-        fields = ['id', 'nombre', 'email', 'foto_url','descripcion','fondo']
+        fields = [
+            'id',
+            'nombre',
+            'email',
+            'google_id',
+            'foto_url',
+            'descripcion',
+            'fondo',
+            'rut',
+            'tipo_usuario',
+            'ubicacion',
+            'is_active',
+            'is_staff',
+            'fecha_creacion',
+            'fecha_modificacion',
+        ]
 
 class UsuarioActualView(APIView):
     permission_classes = [IsAuthenticated]
