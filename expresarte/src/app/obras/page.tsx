@@ -20,8 +20,16 @@ export default function ObrasGeneralesPage() {
 
   useEffect(() => {
     const fetchObras = async () => {
-      const token = localStorage.getItem('access_token'); // si la API requiere auth
+      const token = localStorage.getItem('access_token');
+
+      if (!token) {
+        console.warn('⛔ Token no disponible aún, reintentando en 500ms...');
+        setTimeout(fetchObras, 500);
+        return;
+      }
+
       try {
+        console.log('✅ Usando token:', token);
         const res = await fetch(`http://localhost:8000/api/obras/`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -54,7 +62,7 @@ export default function ObrasGeneralesPage() {
           <div
             key={obra.id}
             className="bg-white rounded shadow hover:shadow-lg transition cursor-pointer"
-            onClick={() => router.push(`/obra/${obra.id}`)}
+            onClick={() => router.push(`/obras/${obra.id}`)}
           >
             <img
               src={obra.imagen_url}

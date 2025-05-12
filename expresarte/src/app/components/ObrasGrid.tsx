@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useCallback } from 'react';
 
 interface Obra {
   id: number;
@@ -18,6 +19,13 @@ interface Props {
 export default function ObrasGrid({ obras }: Props) {
   const router = useRouter();
 
+  const handleClickObra = useCallback(
+    (obraId: number) => {
+      router.push(`/obras/${obraId}`); // sin token en la URL
+    },
+    [router]
+  );
+
   if (!obras || obras.length === 0) {
     return (
       <p className="text-center text-gray-600 mt-8">
@@ -25,23 +33,6 @@ export default function ObrasGrid({ obras }: Props) {
       </p>
     );
   }
-
-  const handleClickObra = (obraId: number) => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      console.warn('⚠️ Token no encontrado aún, esperando...');
-      setTimeout(() => {
-        const retryToken = localStorage.getItem('access_token');
-        if (retryToken) {
-          window.location.href = `/obra/${obraId}?token=${retryToken}`;
-        } else {
-          console.error('⛔ Token sigue sin estar disponible después del delay');
-        }
-      }, 500); // espera 200 ms
-    } else {
-      window.location.href = `/obra/${obraId}?token=${token}`;
-    }
-  };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6 justify-items-center">
