@@ -51,7 +51,6 @@ export default function PerfilUsuario({
   const [mostrarFormObra, setMostrarFormObra] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Actualiza el usuario desde /api/me/
   useEffect(() => {
     const fetchUser = async () => {
       if (!token) return;
@@ -86,18 +85,17 @@ export default function PerfilUsuario({
   };
 
   return (
-    <div className="flex h-[90vh] overflow-hidden max-w-screen-xl mx-auto bg-white shadow-lg rounded-4xl">
-      {/* Columna izquierda - Perfil */}
-      <div className="w-[320px] flex-shrink-0 p-6 overflow-hidden border-r border-gray-200">
+    <div className="flex flex-col lg:flex-row h-auto lg:h-[90vh] max-w-screen-xl mx-auto bg-white shadow-lg rounded-4xl">
+      {/* Perfil */}
+      <div className="w-full lg:w-[320px] p-6 border-b lg:border-b-0 lg:border-r border-gray-200">
         <div className="flex flex-col items-center">
           <Image
             src={user.foto_url || '/default-avatar.png'}
             alt="Perfil"
-            width={250}
-            height={250}
+            width={150}
+            height={150}
             className="border-4 border-black rounded-full shadow-md object-cover"
           />
-
           <h2 className="text-2xl font-bold mt-4 text-center text-black">{user.nombre}</h2>
           <p className="text-sm text-gray-700 text-center">
             Rol:{' '}
@@ -107,22 +105,15 @@ export default function PerfilUsuario({
                 'No especificado'}
             </span>
           </p>
-          <p className="text-sm text-gray-700 text-center">
-            RUT: <span className="font-semibold">{user.rut}</span>
-          </p>
-          <p className="text-sm text-gray-700 text-center mb-2">
-            Región: <span className="font-semibold">{user.ubicacion}</span>
-          </p>
-
-          <p className="text-sm text-gray-600 text-center mb-4">
-            {user.descripcion || 'Sin descripción'}
-          </p>
+          <p className="text-sm text-gray-700 text-center">RUT: <span className="font-semibold">{user.rut}</span></p>
+          <p className="text-sm text-gray-700 text-center mb-2">Región: <span className="font-semibold">{user.ubicacion}</span></p>
+          <p className="text-sm text-gray-600 text-center mb-4">{user.descripcion || 'Sin descripción'}</p>
 
           <div className="flex flex-col gap-4 mb-6 w-full">
             <button
               onClick={() => {
                 router.push('/profile/editar');
-                router.refresh(); // para que al volver se recargue ProfilePage
+                router.refresh();
               }}
               className="bg-black text-white px-4 py-2 rounded hover:bg-rose-950 transition text-sm"
             >
@@ -137,60 +128,46 @@ export default function PerfilUsuario({
           </div>
 
           <div className="grid grid-cols-2 gap-4 w-full">
-            <div className="bg-gray-100 rounded-xl shadow text-center py-3">
-              <p className="text-xl font-bold">{obrasEnVenta.length}</p>
-              <p className="text-sm text-gray-600">En venta</p>
-            </div>
-            <div className="bg-gray-100 rounded-xl shadow text-center py-3">
-              <p className="text-xl font-bold">{obrasNoVenta.length}</p>
-              <p className="text-sm text-gray-600">No en venta</p>
-            </div>
-            <div className="bg-gray-100 rounded-xl shadow text-center py-3">
-              <p className="text-xl font-bold">{user.seguidores ?? 0}</p>
-              <p className="text-sm text-gray-600">Seguidores</p>
-            </div>
-            <div className="bg-gray-100 rounded-xl shadow text-center py-3">
-              <p className="text-xl font-bold">{user.me_gusta ?? 0}</p>
-              <p className="text-sm text-gray-600">Me gusta</p>
-            </div>
+            {[
+              { label: 'En venta', count: obrasEnVenta.length },
+              { label: 'No en venta', count: obrasNoVenta.length },
+              { label: 'Seguidores', count: user.seguidores ?? 0 },
+              { label: 'Me gusta', count: user.me_gusta ?? 0 }
+            ].map((item, i) => (
+              <div key={i} className="bg-gray-100 rounded-xl text-black shadow text-center py-3">
+                <p className="text-xl font-bold">{item.count}</p>
+                <p className="text-sm text-gray-600">{item.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Columna derecha - Obras */}
-      <div className="flex-1 relative overflow-hidden">
+      {/* Obras */}
+      <div className="flex-1 overflow-hidden">
         <div className="sticky top-0 bg-white z-10 p-6 pb-2 border-b border-black">
           <div className="w-full md:w-2/3 mx-auto border border-black rounded-md overflow-hidden">
-            <button
-              className={`w-1/2 py-3 font-semibold text-sm ${
-                activeTab === 'venta'
-                  ? 'bg-black text-white'
-                  : 'bg-white text-black hover:bg-gray-100'
-              }`}
-              onClick={() => reiniciarScrollYCantidad('venta')}
-            >
-              Obras en venta
-            </button>
-            <button
-              className={`w-1/2 py-3 font-semibold text-sm ${
-                activeTab === 'noVenta'
-                  ? 'bg-black text-white'
-                  : 'bg-white text-black hover:bg-gray-100'
-              }`}
-              onClick={() => reiniciarScrollYCantidad('noVenta')}
-            >
-              No en venta
-            </button>
+            {['venta', 'noVenta'].map((tab) => (
+              <button
+                key={tab}
+                className={`w-1/2 py-3 font-semibold text-sm ${
+                  activeTab === tab ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'
+                }`}
+                onClick={() => reiniciarScrollYCantidad(tab as 'venta' | 'noVenta')}
+              >
+                {tab === 'venta' ? 'Obras en venta' : 'No en venta'}
+              </button>
+            ))}
           </div>
         </div>
 
         <div
           ref={containerRef}
-          className="overflow-y-scroll scrollbar-hide px-6 pb-6 animate-fade-in"
-          style={{ height: 'calc(90vh - 105px)' }}
+          className="overflow-y-auto px-6 pb-6 animate-fade-in"
+          style={{ maxHeight: 'calc(100vh - 120px)' }}
         >
           {obrasMostradas.length > 0 ? (
-            <ObrasGrid obras={obrasMostradas} />
+            <ObrasGrid obras={obrasMostradas} slug={user.nombre.toLowerCase().replace(/\s+/g, '-')} />
           ) : (
             <p className="text-center text-gray-600 text-lg mt-20">
               {activeTab === 'venta'
@@ -209,7 +186,7 @@ export default function PerfilUsuario({
                 onObraCreada={() => {
                   setMostrarFormObra(false);
                   setActiveTab('venta');
-                  setCantidadVisible(9);
+                  setCantidadVisible(15);
                 }}
               />
               <button
