@@ -22,34 +22,38 @@ export default function CategoriaSlugPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (!token || !slug) {
-      setError('Token o slug no disponible');
-      setLoading(false);
-      return;
-    }
+  if (!slug) {
+    setError('Slug no disponible');
+    setLoading(false);
+    return;
+  }
 
-    const fetchObras = async () => {
-      try {
-        const res = await fetch(`http://localhost:8000/api/categorias/${slug}/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) throw new Error('Error al obtener obras de la categoría');
-
-        const data = await res.json();
-        setObras(data);
-      } catch (err: any) {
-        setError(err.message || 'Error inesperado');
-      } finally {
-        setLoading(false);
+  const fetchObras = async () => {
+    try {
+      const headers: HeadersInit = {};
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
-    };
 
-    fetchObras();
-  }, [slug]);
+      const res = await fetch(`http://localhost:8000/api/categorias/${slug}/`, {
+        headers,
+      });
+
+      if (!res.ok) throw new Error('Error al obtener obras de la categoría');
+
+      const data = await res.json();
+      setObras(data);
+    } catch (err: any) {
+      setError(err.message || 'Error inesperado');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchObras();
+}, [slug]);
+
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
