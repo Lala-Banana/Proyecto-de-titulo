@@ -1,63 +1,17 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { getSession } from 'next-auth/react';
-
-interface User {
-  id?: number;
-  nombre: string;
-  email: string;
-  foto_url: string;
-}
+import { useAuthUniversal } from '@/hooks/useAuthUniversal';
 
 const Navbar = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, logout, loading } = useAuthUniversal();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem('access_token');
-
-      if (token) {
-        try {
-          const res = await fetch('http://localhost:8000/api/me/', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            setUser(data);
-            setLoading(false);
-            return;
-          }
-        } catch (e) {
-          console.error('❌ Error al obtener usuario desde backend:', e);
-        }
-      }
-
-      // Si no hay token o falla, intentar con sesión de NextAuth
-      const session = await getSession();
-      console.log('📘 Sesión NextAuth en navbar:', session);
-      if (session?.user) {
-        setUser({
-          nombre: session.user.nombre || '',
-          email: session.user.email,
-          foto_url: session.user.foto_url || '/default-avatar.png',
-        });
-      }
-
-      setLoading(false);
-    };
-
-    fetchUser();
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 80);
@@ -75,13 +29,6 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    setUser(null);
-    router.push('/');
-  };
-
   if (loading) return null;
 
   return (
@@ -90,7 +37,12 @@ const Navbar = () => {
     }`}>
       <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
         <Link href="/" className="flex items-center space-x-3">
-          <Image src="https://plus.unsplash.com/premium_vector-1718634329496-83c7a9db4913?q=80&w=2650&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Logo" width={36} height={36} />
+          <Image
+            src="https://plus.unsplash.com/premium_vector-1718634329496-83c7a9db4913?q=80&w=2650&auto=format&fit=crop"
+            alt="Logo"
+            width={36}
+            height={36}
+          />
           <span className="text-2xl font-bold">ExpresArte</span>
         </Link>
 
@@ -118,7 +70,10 @@ const Navbar = () => {
                       </Link>
                     </li>
                     <li>
-                      <button onClick={logout} className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                      <button
+                        onClick={logout}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      >
                         Cerrar sesión
                       </button>
                     </li>

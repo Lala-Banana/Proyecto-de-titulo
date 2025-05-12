@@ -1,50 +1,64 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { getSession } from 'next-auth/react';
 import NavbarCombined from './components/Navbar';
 import Carrusel from './components/Carrusel';
 import Categorias from './components/Categorias';
 import Footer from './components/Footer';
 
 export default function HomePage() {
-  const { data: session } = useSession();
-  const [token, setToken] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<any>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [authType, setAuthType] = useState<'manual' | 'google' | 'none'>('none');
 
   useEffect(() => {
-    // 1. Token desde NextAuth (Google)
-    const nextAuthToken = (session as any)?.access_token;
+    const loadAuth = async () => {
+      const session = await getSession();
+      console.log('🟣 [NextAuth] session:', session);
 
-    // 2. Token desde localStorage (Login manual)
-    const manualToken = localStorage.getItem('access_token');
+      const googleToken = (session as any)?.access_token;
+      const manualToken = localStorage.getItem('access_token');
 
-    const finalToken = nextAuthToken || manualToken;
-    setToken(finalToken);
-    console.log('🔐 Token desde sesión o localStorage:', finalToken);
+      const finalToken = googleToken || manualToken;
+      setToken(finalToken || null);
 
-    if (finalToken) {
-      const fetchUserInfo = async () => {
-        try {
-          const res = await fetch('http://localhost:8000/api/me/', {
-            headers: {
-              Authorization: `Bearer ${finalToken}`,
-            },
-          });
+      if (googleToken) {
+        console.log('✅ Login con Google detectado');
+        setAuthType('google');
+      } else if (manualToken) {
+        console.log('✅ Login manual detectado');
+        setAuthType('manual');
+      } else {
+        console.log('❌ No hay login activo');
+        setAuthType('none');
+        return;
+      }
 
-          if (!res.ok) throw new Error('Error al obtener información del usuario');
+      console.log('🔑 Token usado:', finalToken);
 
-          const data = await res.json();
-          console.log('📥 Datos del usuario desde /api/me/:', data);
-          setUserInfo(data);
-        } catch (error) {
-          console.error('❌ Error en la petición /api/me/', error);
+      try {
+        const res = await fetch('http://localhost:8000/api/me/', {
+          headers: {
+            Authorization: `Bearer ${finalToken}`,
+          },
+        });
+
+        if (!res.ok) {
+          console.warn('⚠️ Token inválido o expirado');
+          return;
         }
-      };
 
-      fetchUserInfo();
-    }
-  }, [session]);
+        const data = await res.json();
+        console.log('👤 Usuario autenticado:', data);
+        setUserInfo(data);
+      } catch (err) {
+        console.error('❌ Error al obtener /api/me/:', err);
+      }
+    };
+
+    loadAuth();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
@@ -57,18 +71,20 @@ export default function HomePage() {
           <Categorias />
         </section>
 
-        {token && (
-          <div className="mt-10 p-4 bg-white rounded-lg shadow text-sm">
-            <p><strong>🔐 Token:</strong></p>
-            <code className="break-words">{token}</code>
-          </div>
-        )}
+        <div className="mt-10 p-4 bg-white rounded-lg shadow text-sm">
+          <p><strong>🔍 Tipo de autenticación:</strong> {authType}</p>
+          <p><strong>🔐 Token:</strong></p>
+          <code className="break-words">{token || 'Ninguno'}</code>
+        </div>
 
         {userInfo && (
           <div className="mt-6 p-4 bg-green-50 border border-green-300 rounded-lg">
             <p><strong>👤 Usuario autenticado:</strong></p>
             <p>Nombre: {userInfo.nombre}</p>
             <p>Email: {userInfo.email}</p>
+            <p>ID: {userInfo.id}</p>
+            <p>Tipo usuario: {userInfo.tipo_usuario || 'No especificado'}</p>
+            <p>Ubicación: {userInfo.ubicacion || 'No disponible'}</p>
           </div>
         )}
       </div>

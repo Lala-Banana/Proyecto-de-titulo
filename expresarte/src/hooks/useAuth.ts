@@ -2,12 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { signOut } from 'next-auth/react';
-
-interface Usuario {
-  email: string;
-  nombre: string;
-  foto_url: string;
-}
+import { Usuario } from '@/types/types';
 
 export function useAuth() {
   const [user, setUser] = useState<Usuario | null>(null);
@@ -26,7 +21,6 @@ export function useAuth() {
       const userData = await res.json();
       setUser(userData);
     } catch (error) {
-      // Si falla el access_token, intenta refrescar
       await tryRefreshToken();
     } finally {
       setLoading(false);
@@ -57,11 +51,11 @@ export function useAuth() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     setUser(null);
-    signOut({ callbackUrl: '/' }); // Cierra sesión también en NextAuth
+    await signOut({ callbackUrl: '/' });
   };
 
   useEffect(() => {
@@ -73,7 +67,6 @@ export function useAuth() {
     }
   }, []);
 
-  // Sincroniza logout en otras pestañas
   useEffect(() => {
     const syncLogout = (e: StorageEvent) => {
       if ((e.key === 'access_token' || e.key === 'refresh_token') && !e.newValue) {
