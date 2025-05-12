@@ -14,24 +14,21 @@ interface Obra {
 
 interface Props {
   obras: Obra[];
+  slug: string;
 }
 
-export default function ObrasGrid({ obras }: Props) {
+export default function ObrasGrid({ obras, slug }: Props) {
   const router = useRouter();
 
   const handleClickObra = useCallback(
     (obraId: number) => {
-      router.push(`/obras/${obraId}`); // sin token en la URL
+      router.push(`/publicacion/${obraId}`);
     },
-    [router]
+    [router, slug]
   );
 
   if (!obras || obras.length === 0) {
-    return (
-      <p className="text-center text-gray-600 mt-8">
-        No hay obras disponibles para mostrar.
-      </p>
-    );
+    return <p className="text-center text-gray-600 mt-8">No hay obras disponibles para mostrar.</p>;
   }
 
   return (
@@ -43,11 +40,7 @@ export default function ObrasGrid({ obras }: Props) {
           className="relative bg-gray-100 rounded shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
           style={{ width: '200px', height: '200px' }}
         >
-          <img
-            src={obra.imagen_url}
-            alt={obra.titulo}
-            className="w-full h-full object-cover"
-          />
+          <img src={obra.imagen_url} alt={obra.titulo} className="w-full h-full object-cover" />
           {obra.en_venta && (
             <div className="absolute top-1 left-1 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
               ${obra.precio}

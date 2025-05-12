@@ -30,7 +30,7 @@ export default function ObraPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Extraer el ID de la URL
-  const idMatch = pathname.match(/\/obras\/(\d+)/);
+  const idMatch = pathname.match(/\/publicacion\/(\d+)/);
   const obraId = idMatch ? idMatch[1] : null;
 
   // Función unificada para obtener el token

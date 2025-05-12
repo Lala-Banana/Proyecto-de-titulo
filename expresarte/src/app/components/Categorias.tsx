@@ -10,11 +10,9 @@ type Category = {
   imagen_url: string | null;
 };
 
-const GalleryMosaic: React.FC = () => {
+const Categorias: React.FC = () => {
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const router = useRouter();
-
-  const categoriasPermitidas = [1, 2, 3, 4, 5]; // Mostramos 5 categorías
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -31,18 +29,16 @@ const GalleryMosaic: React.FC = () => {
     fetchCategories();
   }, []);
 
-  const filteredCategories = allCategories.filter((cat) =>
-    categoriasPermitidas.includes(cat.id)
-  );
-
   const handleClick = (slug: string) => {
     router.push(`/categoria/${slug}`);
   };
 
   return (
     <div className="flex flex-col items-center px-2 sm:px-4 py-12 bg-[#f7f7f7] text-center">
+      <h1 className="text-3xl font-bold mb-8">Categorías disponibles</h1>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 w-full">
-        {filteredCategories.map((cat) => (
+        {allCategories.map((cat) => (
           <div
             key={cat.id}
             onClick={() => handleClick(cat.slug)}
@@ -60,7 +56,6 @@ const GalleryMosaic: React.FC = () => {
         ))}
       </div>
 
-      {/* Texto inferior elegante */}
       <div className="mt-16">
         <h2 className="text-4xl font-serif font-bold tracking-wide">NEW ARRIVAL</h2>
         <p className="mt-2 text-md italic tracking-wider text-gray-700">
@@ -71,4 +66,4 @@ const GalleryMosaic: React.FC = () => {
   );
 };
 
-export default GalleryMosaic;
+export default Categorias;

@@ -32,7 +32,7 @@ urlpatterns = [
 
 
 
-
+ 
     # Obras
     path('obras/', ObraListCreateView.as_view(), name='obras-list-create'),
     path('obras/<int:pk>/', ObraDetailView.as_view(), name='obras-detail'),
