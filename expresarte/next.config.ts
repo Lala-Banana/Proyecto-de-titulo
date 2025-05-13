@@ -61,6 +61,11 @@ const nextConfig = {
         hostname: 'cdn.rafled.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'cl.pinterest.com',
+        pathname: '/**',
+      },
     ],
   },
 };

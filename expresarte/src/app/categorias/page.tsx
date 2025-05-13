@@ -8,6 +8,7 @@ export default function CategoriasPage() {
   return (
     <>
       <NavbarCombined />
+      
       <Categorias />
       <Footer />
     </>

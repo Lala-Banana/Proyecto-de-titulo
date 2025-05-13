@@ -35,8 +35,8 @@ const Categorias: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center px-2 sm:px-4 py-12 bg-[#f7f7f7] text-center">
-      <h1 className="text-3xl font-bold mb-8">Categorías disponibles</h1>
 
+      <h1 className="text-4xl font-serif italic font-bold tracking-wider text-center text-black">CATEGORIAS DISPONIBLES</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 w-full">
         {allCategories.map((cat) => (
           <div
@@ -56,12 +56,7 @@ const Categorias: React.FC = () => {
         ))}
       </div>
 
-      <div className="mt-16">
-        <h2 className="text-4xl font-serif font-bold tracking-wide">NEW ARRIVAL</h2>
-        <p className="mt-2 text-md italic tracking-wider text-gray-700">
-          INTRODUCING OUR NEW FASHION COLLECTION
-        </p>
-      </div>
+      
     </div>
   );
 };

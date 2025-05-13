@@ -6,6 +6,7 @@ import NavbarCombined from './components/Navbar';
 import Carrusel from './components/Carrusel';
 import Categorias from './components/Categorias';
 import Footer from './components/Footer';
+import UsuariosAleatorios from './components/UsuariosAleatorioHome';
 
 export default function HomePage() {
   const [userInfo, setUserInfo] = useState<any>(null);
@@ -64,13 +65,13 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <NavbarCombined />
       <Carrusel />
+      
+      <Categorias />
 
-      <div className="px-4 md:px-8 mt-8">
-        <section className="mt-8">
-          <h2 className="text-2xl font-semibold text-center mb-4">Explora por categorías</h2>
-          <Categorias />
-        </section>
 
+          
+
+      {/*}
         <div className="mt-10 p-4 bg-white rounded-lg shadow text-sm">
           <p><strong>🔍 Tipo de autenticación:</strong> {authType}</p>
           <p><strong>🔐 Token:</strong></p>
@@ -87,8 +88,9 @@ export default function HomePage() {
             <p>Ubicación: {userInfo.ubicacion || 'No disponible'}</p>
           </div>
         )}
-      </div>
+        */}
 
+        <UsuariosAleatorios />
       <Footer />
     </div>
   );

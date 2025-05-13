@@ -1,5 +1,6 @@
 # views.py (completo y corregido)
 from rest_framework import generics, permissions, status
+from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
@@ -10,6 +11,8 @@ from .serializers import (
     MensajeSerializer, NotificacionSerializer, LogSerializer,
     UsuarioSerializer, RegistroSerializer, LoginSerializer, GoogleLoginSerializer
 )
+from rest_framework.permissions import AllowAny
+from .serializers import UsuarioPublicoSerializer
 
 # Función auxiliar para obtener los tokens
 def get_tokens_for_user(user):
@@ -191,3 +194,49 @@ def mis_obras(request):
     obras = Obra.objects.filter(usuario=usuario, activo=True)
     serializer = ObraSerializer(obras, many=True)
     return Response(serializer.data)
+
+class PerfilPublicoView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, usuario_id):
+        try:
+            usuario = Usuario.objects.get(id=usuario_id)
+            serializer = UsuarioPublicoSerializer(usuario)
+            return Response(serializer.data)
+        except Usuario.DoesNotExist:
+            return Response({'detail': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        
+
+class UsuariosPublicosView(ListAPIView):
+    queryset = Usuario.objects.filter(is_active=True)
+    serializer_class = UsuarioPublicoSerializer
+    permission_classes = [AllowAny]
+
+
+class ObraListView(generics.ListAPIView):
+    serializer_class = ObraSerializer
+
+    def get_queryset(self):
+        queryset = Obra.objects.filter(activo=True)
+        categoria_id = self.request.query_params.get('categoria_id')
+        precio_max = self.request.query_params.get('precio_max')
+
+        if categoria_id:
+            queryset = queryset.filter(categoria_id=categoria_id)
+        if precio_max:
+            queryset = queryset.filter(precio__lte=precio_max)
+
+        return queryset
+    
+# views.py
+def get_queryset(self):
+    queryset = Obra.objects.all()
+    categoria_id = self.request.query_params.get('categoria_id')
+    precio_max = self.request.query_params.get('precio_max')
+
+    if categoria_id:
+        queryset = queryset.filter(categoria_id=categoria_id)
+    if precio_max:
+        queryset = queryset.filter(precio__lte=precio_max)
+
+    return queryset

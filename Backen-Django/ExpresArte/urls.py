@@ -1,7 +1,7 @@
 # urls.py (usando path personalizado para cada ViewSet)
 from django.urls import path
 from .views import (
-    RegistroView, LoginView, UsuarioActualView, guardar_usuario_google,
+    PerfilPublicoView, RegistroView, LoginView, UsuarioActualView, UsuariosPublicosView, guardar_usuario_google,
     CategoriaListCreateView, CategoriaDetailView,
     ObraListCreateView, ObraDetailView,
     CompraListCreateView, CompraDetailView,
@@ -31,6 +31,8 @@ urlpatterns = [
     path('categorias/<int:pk>/', CategoriaDetailView.as_view(), name='categorias-detail'),
 
 
+    path('perfil-publico/<int:usuario_id>/', PerfilPublicoView.as_view(), name='perfil-publico'),
+    path('usuarios-publicos/', UsuariosPublicosView.as_view(), name='usuarios-publicos'),
 
  
     # Obras

@@ -106,3 +106,18 @@ class ObraSerializer(serializers.ModelSerializer):
     class Meta:
         model = Obra
         fields = '__all__'
+
+
+class UsuarioPublicoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Usuario
+        fields = [
+            'id',
+            'nombre',
+            'rut',
+            'tipo_usuario',
+            'descripcion',
+            'foto_url',
+            'fondo',
+            'ubicacion',
+        ]
