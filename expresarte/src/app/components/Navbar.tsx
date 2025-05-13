@@ -11,6 +11,7 @@ const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -29,6 +30,13 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/buscar?query=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
   if (loading) return null;
 
   return (
@@ -46,6 +54,26 @@ const Navbar = () => {
           <span className="text-2xl font-bold">ExpresArte</span>
         </Link>
 
+        {/* botones y buscador */}
+        <div className="flex items-center gap-4">
+          <Link href="/categorias" className="hover:underline text-sm">
+            Categorías
+          </Link>
+          <Link href="/obras" className="hover:underline text-sm">
+            Obras
+          </Link>
+          <form onSubmit={handleSearchSubmit}>
+            <input
+              type="text"
+              placeholder="Buscar..."
+              className="px-2 py-1 rounded border text-sm text-black"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </form>
+        </div>
+
+        {/* usuario/login */}
         <div className="flex items-center gap-4" ref={dropdownRef}>
           {user ? (
             <>

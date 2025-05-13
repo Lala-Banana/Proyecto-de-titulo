@@ -116,7 +116,7 @@ class ObraListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        queryset = Obra.objects.filter(activo=True)
+        queryset = Obra.objects.all()
         usuario_id = self.request.query_params.get('usuario_id')
         if usuario_id:
             queryset = queryset.filter(usuario__id=usuario_id)
