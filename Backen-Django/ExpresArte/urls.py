@@ -27,8 +27,8 @@ urlpatterns = [
 
     # Categorías
     path('categorias/', CategoriaListCreateView.as_view(), name='categorias-list-create'),
-    path('categorias/<slug:slug>/', ObrasPorCategoriaView.as_view(), name='obras-por-categoria'),
     path('categorias/<int:pk>/', CategoriaDetailView.as_view(), name='categorias-detail'),
+    path('categorias/<slug:slug>/', ObrasPorCategoriaView.as_view(), name='obras-por-categoria'),
 
 
 
