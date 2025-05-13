@@ -13,6 +13,7 @@ interface Categoria {
 }
 
 export default function CategoriasPage() {
+  const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [nombre, setNombre] = useState('')
   const [descripcion, setDescripcion] = useState('')
@@ -23,28 +24,27 @@ export default function CategoriasPage() {
   const [mensaje, setMensaje] = useState<string | null>(null)
   const formularioRef = useRef<HTMLDivElement | null>(null)
 
+  const getToken = () => localStorage.getItem('access_token') ?? ''
+
   const fetchCategorias = async () => {
     try {
-      const token = localStorage.getItem('access_token')
-      const headers = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      }
-
-      const res = await fetch('http://localhost:8000/api/admin/categorias/', { headers })
-
+      const token = getToken()
+      const res = await fetch(`${BASE}/api/admin/categorias/`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      })
       if (!res.ok) {
         console.error(`❌ Error al obtener categorías: ${res.status}`)
+        if (res.status === 401) console.warn('🔐 Token expirado o inválido')
         setCategorias([])
         return
       }
-
       const data = await res.json()
-
-      if (Array.isArray(data)) {
-        setCategorias(data)
-      } else {
-        console.error('❌ Error: respuesta inesperada del servidor', data)
+      if (Array.isArray(data)) setCategorias(data)
+      else {
+        console.error('❌ Respuesta inesperada del servidor:', data)
         setCategorias([])
       }
     } catch (error) {
@@ -60,25 +60,27 @@ export default function CategoriasPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const payload = { nombre, descripcion, slug, imagen_url: imagenUrl, visible }
-
-    const token = localStorage.getItem('access_token')
-    const headers = {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    }
-
+    const token = getToken()
     const url = editandoId
-      ? `http://localhost:8000/api/categorias/${editandoId}/`
-      : 'http://localhost:8000/api/categorias/'
+      ? `${BASE}/api/admin/categorias/${editandoId}/`
+      : `${BASE}/api/admin/categorias/`
     const method = editandoId ? 'PUT' : 'POST'
 
-    const res = await fetch(url, {
-      method,
-      headers,
-      body: JSON.stringify(payload),
-    })
-
-    if (res.ok) {
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error(`❌ Error al guardar (${res.status}):`, errorText)
+        return
+      }
+      // Limpiamos form y recargamos lista
       setNombre('')
       setDescripcion('')
       setSlug('')
@@ -88,39 +90,41 @@ export default function CategoriasPage() {
       fetchCategorias()
       setMensaje(editandoId ? '✅ Categoría actualizada exitosamente.' : '✅ Categoría creada exitosamente.')
       setTimeout(() => setMensaje(null), 3000)
-    } else {
-      const errorText = await res.text()
-      console.error(`❌ Error al guardar (${res.status}):`, errorText)
+    } catch (error) {
+      console.error('❌ Error de red al guardar categoría:', error)
     }
   }
 
   const handleEditar = (cat: Categoria) => {
     setNombre(cat.nombre)
-    setDescripcion(cat.descripcion || '')
+    setDescripcion(cat.descripcion)
     setSlug(cat.slug)
-    setImagenUrl(cat.imagen_url || '')
+    setImagenUrl(cat.imagen_url)
     setVisible(cat.visible)
     setEditandoId(cat.id)
-
     formularioRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
   const handleEliminar = async (id: number) => {
-    const token = localStorage.getItem('access_token')
-    const headers = {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    }
-
     if (!confirm('¿Eliminar esta categoría?')) return
-    const res = await fetch(`http://localhost:8000/api/categorias/${id}/`, {
-      method: 'DELETE',
-      headers,
-    })
-    if (res.ok) {
+    const token = getToken()
+    try {
+      const res = await fetch(`${BASE}/api/admin/categorias/${id}/`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (!res.ok) {
+        console.error(`❌ Error al eliminar (${res.status})`)
+        return
+      }
       fetchCategorias()
       setMensaje('🗑️ Categoría eliminada exitosamente.')
       setTimeout(() => setMensaje(null), 3000)
+    } catch (error) {
+      console.error('❌ Error de red al eliminar categoría:', error)
     }
   }
 

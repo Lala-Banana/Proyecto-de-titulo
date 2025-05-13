@@ -1,7 +1,7 @@
 # urls.py (usando path personalizado para cada ViewSet)
 from django.urls import path
 from .views import (
-    PerfilPublicoView, RegistroView, LoginView, UsuarioActualView, UsuariosPublicosView, guardar_usuario_google,
+    CategoriaAdminListView, PerfilPublicoView, RegistroView, LoginView, UsuarioActualView, UsuariosPublicosView, guardar_usuario_google,
     CategoriaListCreateView, CategoriaDetailView,
     ObraListCreateView, ObraDetailView,
     CompraListCreateView, CompraDetailView,
@@ -61,5 +61,6 @@ urlpatterns = [
     
     #EDITAR PERFIL
     path('editar-perfil/', editar_perfil, name='editar_perfil'),
-
+    #ADMIN
+    path('admin/categorias/', CategoriaAdminListView.as_view(), name='admin-categorias-list'),
 ]

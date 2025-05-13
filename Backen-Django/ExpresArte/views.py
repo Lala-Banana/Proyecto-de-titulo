@@ -240,3 +240,8 @@ def get_queryset(self):
         queryset = queryset.filter(precio__lte=precio_max)
 
     return queryset
+#ADMIN
+class CategoriaAdminListView(generics.ListAPIView):
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
+    permission_classes = [permissions.IsAuthenticated]  # solo admin logueado
