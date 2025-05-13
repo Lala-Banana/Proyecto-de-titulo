@@ -10,7 +10,8 @@ from .views import (
     NotificacionListCreateView, NotificacionDetailView, TokenGoogleView,
     LogListView,
     ObrasPorCategoriaView , # ← Correctamente agregado
-    editar_perfil
+    editar_perfil,
+    CategoriaAdminListView
 
 )
 
@@ -58,5 +59,9 @@ urlpatterns = [
     
     #EDITAR PERFIL
     path('editar-perfil/', editar_perfil, name='editar_perfil'),
+
+    #ADMIN
+    path('admin/categorias/', CategoriaAdminListView.as_view(), name='admin-categorias-list'),
+
 
 ]

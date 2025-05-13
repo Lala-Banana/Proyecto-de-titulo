@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import Image from 'next/image'
 
 interface Categoria {
   id: number
@@ -19,16 +20,37 @@ export default function CategoriasPage() {
   const [visible, setVisible] = useState(true)
   const [imagenUrl, setImagenUrl] = useState('')
   const [editandoId, setEditandoId] = useState<number | null>(null)
+  const [mensaje, setMensaje] = useState<string | null>(null)
+  const formularioRef = useRef<HTMLDivElement | null>(null)
 
   const fetchCategorias = async () => {
-    const token = localStorage.getItem('access_token')
-    const headers = {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+    try {
+      const token = localStorage.getItem('access_token')
+      const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      }
+
+      const res = await fetch('http://localhost:8000/api/admin/categorias/', { headers })
+
+      if (!res.ok) {
+        console.error(`❌ Error al obtener categorías: ${res.status}`)
+        setCategorias([])
+        return
+      }
+
+      const data = await res.json()
+
+      if (Array.isArray(data)) {
+        setCategorias(data)
+      } else {
+        console.error('❌ Error: respuesta inesperada del servidor', data)
+        setCategorias([])
+      }
+    } catch (error) {
+      console.error('❌ Error de red al cargar categorías:', error)
+      setCategorias([])
     }
-    const res = await fetch('http://localhost:8000/api/categorias/', { headers })
-    const data = await res.json()
-    setCategorias(data)
   }
 
   useEffect(() => {
@@ -64,6 +86,8 @@ export default function CategoriasPage() {
       setVisible(true)
       setEditandoId(null)
       fetchCategorias()
+      setMensaje(editandoId ? '✅ Categoría actualizada exitosamente.' : '✅ Categoría creada exitosamente.')
+      setTimeout(() => setMensaje(null), 3000)
     } else {
       const errorText = await res.text()
       console.error(`❌ Error al guardar (${res.status}):`, errorText)
@@ -77,6 +101,8 @@ export default function CategoriasPage() {
     setImagenUrl(cat.imagen_url || '')
     setVisible(cat.visible)
     setEditandoId(cat.id)
+
+    formularioRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
   const handleEliminar = async (id: number) => {
@@ -91,77 +117,115 @@ export default function CategoriasPage() {
       method: 'DELETE',
       headers,
     })
-    if (res.ok) fetchCategorias()
+    if (res.ok) {
+      fetchCategorias()
+      setMensaje('🗑️ Categoría eliminada exitosamente.')
+      setTimeout(() => setMensaje(null), 3000)
+    }
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">Categorías</h2>
+    <div className="p-4 bg-white min-h-screen text-black">
+      <h2 className="text-3xl font-bold mb-6">Categorías</h2>
 
-      <form onSubmit={handleSubmit} className="mb-6 space-y-2">
-        <input
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          placeholder="Nombre"
-          className="border p-2 rounded w-full"
-          required
-        />
-        <input
-          value={descripcion}
-          onChange={(e) => setDescripcion(e.target.value)}
-          placeholder="Descripción"
-          className="border p-2 rounded w-full"
-        />
-        <input
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
-          placeholder="Slug"
-          className="border p-2 rounded w-full"
-          required
-        />
-        <input
-          value={imagenUrl}
-          onChange={(e) => setImagenUrl(e.target.value)}
-          placeholder="URL de la imagen"
-          className="border p-2 rounded w-full"
-        />
-        <label className="block">
-          <input
-            type="checkbox"
-            checked={visible}
-            onChange={(e) => setVisible(e.target.checked)}
-          />{' '}
-          Visible
-        </label>
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
-          {editandoId ? 'Actualizar' : 'Agregar'} Categoría
-        </button>
-      </form>
+      {mensaje && (
+        <div className="mb-4 p-3 bg-green-100 text-green-800 rounded shadow">
+          {mensaje}
+        </div>
+      )}
 
-      <table className="w-full border rounded-md bg-white text-left">
-        <thead>
-          <tr className="bg-gray-100 border-b">
-            <th className="p-2">Nombre</th>
-            <th className="p-2">Slug</th>
-            <th className="p-2">Visible</th>
-            <th className="p-2">Acciones</th>
+      <div ref={formularioRef}>
+        <form onSubmit={handleSubmit} className="mb-8 space-y-3 bg-gray-100 p-4 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              placeholder="Nombre"
+              className="bg-gray-200 text-black border border-gray-300 p-2 rounded"
+              required
+            />
+            <input
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              placeholder="Slug"
+              className="bg-gray-200 text-black border border-gray-300 p-2 rounded"
+              required
+            />
+            <input
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              placeholder="Descripción"
+              className="bg-gray-200 text-black border border-gray-300 p-2 rounded col-span-2"
+            />
+            <input
+              value={imagenUrl}
+              onChange={(e) => setImagenUrl(e.target.value)}
+              placeholder="URL de la imagen"
+              className="bg-gray-200 text-black border border-gray-300 p-2 rounded col-span-2"
+            />
+          </div>
+          <div className="flex items-center gap-4 mt-4">
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                checked={visible}
+                onChange={(e) => setVisible(e.target.checked)}
+                className="form-checkbox h-5 w-5 text-blue-600"
+              />
+              <span className="ml-2">Visible</span>
+            </label>
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded text-white"
+            >
+              {editandoId ? 'Actualizar' : 'Agregar'} Categoría
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <table className="w-full text-left bg-gray-100 rounded-lg overflow-hidden">
+        <thead className="bg-gray-200 text-gray-700">
+          <tr>
+            <th className="p-3">ID</th>
+            <th className="p-3">Imagen</th>
+            <th className="p-3">Nombre</th>
+            <th className="p-3">Descripción</th>
+            <th className="p-3">Slug</th>
+            <th className="p-3">Visible</th>
+            <th className="p-3">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {categorias.map((cat) => (
-            <tr key={cat.id} className="border-b">
-              <td className="p-2">{cat.nombre}</td>
-              <td className="p-2">{cat.slug}</td>
-              <td className="p-2">{cat.visible ? '✅' : '❌'}</td>
-              <td className="p-2 space-x-2">
+            <tr key={cat.id} className="border-b border-gray-300">
+              <td className="p-3">{cat.id}</td>
+              <td className="p-3">
+                {cat.imagen_url ? (
+                  <Image
+                    src={cat.imagen_url}
+                    alt={cat.nombre}
+                    width={50}
+                    height={50}
+                    className="rounded object-cover"
+                  />
+                ) : (
+                  <span className="text-gray-400">Sin imagen</span>
+                )}
+              </td>
+              <td className="p-3">{cat.nombre}</td>
+              <td className="p-3">{cat.descripcion}</td>
+              <td className="p-3">{cat.slug}</td>
+              <td className="p-3">{cat.visible ? '✅' : '❌'}</td>
+              <td className="p-3 flex gap-2">
                 <button
-                  className="text-blue-600 hover:underline"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
                   onClick={() => handleEditar(cat)}
                 >
                   Editar
                 </button>
                 <button
-                  className="text-red-600 hover:underline"
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
                   onClick={() => handleEliminar(cat.id)}
                 >
                   Eliminar

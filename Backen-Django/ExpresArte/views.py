@@ -191,3 +191,9 @@ def mis_obras(request):
     obras = Obra.objects.filter(usuario=usuario, activo=True)
     serializer = ObraSerializer(obras, many=True)
     return Response(serializer.data)
+
+#ADMIN
+class CategoriaAdminListView(generics.ListAPIView):
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
+    permission_classes = [permissions.IsAuthenticated]  # solo admin logueado
