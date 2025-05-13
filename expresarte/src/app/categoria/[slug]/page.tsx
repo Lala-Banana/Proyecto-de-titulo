@@ -32,9 +32,7 @@ export default function CategoriaSlugPage() {
     try {
       const headers: HeadersInit = {};
       const token = localStorage.getItem('access_token');
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+
 
       const res = await fetch(`http://localhost:8000/api/categorias/${slug}/`, {
         headers,

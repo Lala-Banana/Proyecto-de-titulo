@@ -146,7 +146,7 @@ export default function PerfilUsuario({
       {/* Obras */}
       <div className="flex-1 overflow-hidden">
         <div className="sticky top-0 bg-white z-10 p-6 pb-2 border-b border-black">
-          <div className="w-full md:w-2/3 mx-auto border border-black rounded-md overflow-hidden">
+          <div className="w-full md:w-2/3 mx-auto border  border-black rounded-md overflow-hidden">
             {['venta', 'noVenta'].map((tab) => (
               <button
                 key={tab}
