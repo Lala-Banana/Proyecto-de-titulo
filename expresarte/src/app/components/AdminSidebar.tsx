@@ -8,6 +8,7 @@ const links = [
   { href: '/admin/usuarios', label: 'Usuarios', icon: <FaUser /> },
   { href: '/admin/categorias', label: 'Categorías', icon: <FaTags /> },
   { href: '/admin/obras', label: 'Obras', icon: <FaPaintBrush /> },
+  { href: '/admin/logs', label: 'Logs', icon: <FaFileAlt /> },
 
 ]
 

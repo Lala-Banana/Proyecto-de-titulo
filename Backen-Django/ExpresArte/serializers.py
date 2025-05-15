@@ -97,9 +97,12 @@ class NotificacionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class LogSerializer(serializers.ModelSerializer):
+    usuario_nombre = serializers.CharField(source='usuario.nombre', read_only=True)
+    usuario_email = serializers.CharField(source='usuario.email', read_only=True)
+
     class Meta:
         model = Log
-        fields = '__all__'
+        fields = ['id', 'tabla', 'id_registro', 'accion', 'descripcion', 'fecha', 'usuario_nombre', 'usuario_email']
 
 #LALA ==================
 class ObraSerializer(serializers.ModelSerializer):

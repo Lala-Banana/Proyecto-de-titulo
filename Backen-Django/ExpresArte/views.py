@@ -240,33 +240,80 @@ def get_queryset(self):
         queryset = queryset.filter(precio__lte=precio_max)
 
     return queryset
+
 #ADMIN
-class CategoriaAdminListView(generics.ListAPIView):
+class CategoriaAdminListView(generics.ListCreateAPIView):  # ← CAMBIADO
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
-    permission_classes = [permissions.IsAuthenticated]  # solo admin logueado
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        categoria = serializer.save()
+        registrar_log(self.request.user, 'Categoria', categoria.id, 'creacion', f"Categoría '{categoria.nombre}' creada.")
 
 class CategoriaAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
-    permission_classes = [permissions.IsAuthenticated]  # o IsAdminUser si quieres restringir más
+    permission_classes = [permissions.IsAuthenticated]
 
-class UsuarioAdminListView(generics.ListAPIView):
+    def perform_update(self, serializer):
+        categoria = serializer.save()
+        registrar_log(self.request.user, 'Categoria', categoria.id, 'modificacion', f"Categoría '{categoria.nombre}' modificada.")
+
+    def perform_destroy(self, instance):
+        registrar_log(self.request.user, 'Categoria', instance.id, 'eliminacion', f"Categoría '{instance.nombre}' eliminada.")
+        instance.delete()
+
+class UsuarioAdminListView(generics.ListCreateAPIView):  # ← CAMBIADO
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        usuario = serializer.save()
+        registrar_log(self.request.user, 'Usuario', usuario.id, 'creacion', f"Usuario '{usuario.email}' creado.")
 
 class UsuarioAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-class ObraAdminListView(generics.ListAPIView):
+    def perform_update(self, serializer):
+        usuario = serializer.save()
+        registrar_log(self.request.user, 'Usuario', usuario.id, 'modificacion', f"Usuario '{usuario.email}' modificado.")
+
+    def perform_destroy(self, instance):
+        registrar_log(self.request.user, 'Usuario', instance.id, 'eliminacion', f"Usuario '{instance.email}' eliminado.")
+        instance.delete()
+
+class ObraAdminListView(generics.ListCreateAPIView):  # ← CAMBIADO
     queryset = Obra.objects.all()
     serializer_class = ObraSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        obra = serializer.save()
+        registrar_log(self.request.user, 'Obra', obra.id, 'creacion', f"Obra '{obra.titulo}' creada.")
 
 class ObraAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Obra.objects.all()
     serializer_class = ObraSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def perform_update(self, serializer):
+        obra = serializer.save()
+        registrar_log(self.request.user, 'Obra', obra.id, 'modificacion', f"Obra '{obra.titulo}' modificada.")
+
+    def perform_destroy(self, instance):
+        registrar_log(self.request.user, 'Obra', instance.id, 'eliminacion', f"Obra '{instance.titulo}' eliminada.")
+        instance.delete()
+
+#REGISTRAR CAMBIOS
+def registrar_log(usuario, tabla, id_registro, accion, descripcion=None):
+    Log.objects.create(
+        usuario=usuario,
+        tabla=tabla,
+        id_registro=id_registro,
+        accion=accion,
+        descripcion=descripcion
+    )
