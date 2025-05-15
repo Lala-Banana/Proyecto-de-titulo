@@ -40,9 +40,7 @@ const Navbar = () => {
   if (loading) return null;
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
-      scrolled ? 'bg-white shadow text-black' : 'bg-transparent text-white'
-    }`}>
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-white shadow text-black' : 'bg-transparent text-white'}`}>
       <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
         <Link href="/" className="flex items-center space-x-3">
           <Image
@@ -54,7 +52,7 @@ const Navbar = () => {
           <span className="text-2xl font-bold">ExpresArte</span>
         </Link>
 
-        {/* botones y buscador */}
+        {/* enlaces y buscador */}
         <div className="flex items-center gap-4">
           <Link href="/categorias" className="hover:underline text-sm">
             Categorías
@@ -73,10 +71,19 @@ const Navbar = () => {
           </form>
         </div>
 
-        {/* usuario/login */}
-        <div className="flex items-center gap-4" ref={dropdownRef}>
+        {/* usuario / login */}
+        <div className="relative flex items-center gap-4" ref={dropdownRef}>
           {user ? (
             <>
+              {user.is_staff && (
+                <Link
+                  href="/admin/obras"
+                  className="bg-gray-800 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
+                >
+                  Admin
+                </Link>
+              )}
+
               <Image
                 src={user.foto_url || '/default-avatar.png'}
                 alt="User"
@@ -85,8 +92,9 @@ const Navbar = () => {
                 className="rounded-full cursor-pointer"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               />
+
               {dropdownOpen && (
-                <div className="absolute right-4 mt-14 w-48 bg-white rounded-md shadow-lg text-black z-50">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg text-black z-50">
                   <div className="p-4 border-b">
                     <p className="text-sm font-semibold">{user.nombre}</p>
                     <p className="text-xs text-gray-500">{user.email}</p>

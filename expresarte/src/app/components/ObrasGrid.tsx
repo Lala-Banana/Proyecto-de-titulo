@@ -15,9 +15,10 @@ interface Obra {
 interface Props {
   obras: Obra[];
   slug: string;
+  columnas?: number; // 🆕 Nueva prop opcional
 }
 
-export default function ObrasGrid({ obras, slug }: Props) {
+export default function ObrasGrid({ obras, slug, columnas = 4 }: Props) {
   const router = useRouter();
 
   const handleClickObra = useCallback(
@@ -31,8 +32,11 @@ export default function ObrasGrid({ obras, slug }: Props) {
     return <p className="text-center text-gray-600 mt-8">No hay obras disponibles para mostrar.</p>;
   }
 
+  // Generar clases dinámicamente
+  const gridColsClass = `grid-cols-1 sm:grid-cols-2 md:grid-cols-${columnas}`;
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6 justify-items-center">
+    <div className={`grid ${gridColsClass} gap-6 mt-6 justify-items-center`}>
       {obras.map((obra) => (
         <div
           key={obra.id}

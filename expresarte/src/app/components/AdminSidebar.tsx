@@ -8,10 +8,7 @@ const links = [
   { href: '/admin/usuarios', label: 'Usuarios', icon: <FaUser /> },
   { href: '/admin/categorias', label: 'Categorías', icon: <FaTags /> },
   { href: '/admin/obras', label: 'Obras', icon: <FaPaintBrush /> },
-  { href: '/admin/compras', label: 'Compras', icon: <FaShoppingCart /> },
-  { href: '/admin/mensajes', label: 'Mensajes', icon: <FaEnvelope /> },
-  { href: '/admin/notificaciones', label: 'Notificaciones', icon: <FaBell /> },
-  { href: '/admin/logs', label: 'Logs', icon: <FaFileAlt /> },
+
 ]
 
 export default function AdminSidebar() {
@@ -20,8 +17,8 @@ export default function AdminSidebar() {
   return (
     <aside className="w-64 min-h-screen bg-white border-r px-4 py-6 flex flex-col justify-between">
       <div>
-        <h1 className="text-2xl font-bold mb-6">🎨 Admin</h1>
-        <nav className="flex flex-col space-y-4">
+        <h1 className="text-2xl text-black font-bold mb-6">🎨 Admin</h1>
+        <nav className="flex flex-col text-black space-y-4">
           {links.map(({ href, label, icon }) => (
             <Link
               key={href}

@@ -1,7 +1,7 @@
 # urls.py (usando path personalizado para cada ViewSet)
 from django.urls import path
 from .views import (
-    CategoriaAdminListView, PerfilPublicoView, RegistroView, LoginView, UsuarioActualView, UsuariosPublicosView, guardar_usuario_google,
+    CategoriaAdminDetailView, ObraAdminDetailView, ObraAdminListView, PerfilPublicoView, RegistroView, LoginView, UsuarioActualView, UsuarioAdminDetailView, UsuarioAdminListView, UsuariosPublicosView, guardar_usuario_google,
     CategoriaListCreateView, CategoriaDetailView,
     ObraListCreateView, ObraDetailView,
     CompraListCreateView, CompraDetailView,
@@ -10,7 +10,8 @@ from .views import (
     NotificacionListCreateView, NotificacionDetailView, TokenGoogleView,
     LogListView,
     ObrasPorCategoriaView , # ← Correctamente agregado
-    editar_perfil
+    editar_perfil,
+    CategoriaAdminListView
 
 )
 
@@ -29,7 +30,6 @@ urlpatterns = [
     path('categorias/', CategoriaListCreateView.as_view(), name='categorias-list-create'),
     path('categorias/<int:pk>/', CategoriaDetailView.as_view(), name='categorias-detail'),
     path('categorias/<slug:slug>/', ObrasPorCategoriaView.as_view(), name='obras-por-categoria'),
-
 
 
     path('perfil-publico/<int:usuario_id>/', PerfilPublicoView.as_view(), name='perfil-publico'),
@@ -61,6 +61,15 @@ urlpatterns = [
     
     #EDITAR PERFIL
     path('editar-perfil/', editar_perfil, name='editar_perfil'),
-    #ADMIN
+
+    # ADMIN
     path('admin/categorias/', CategoriaAdminListView.as_view(), name='admin-categorias-list'),
+    path('admin/categorias/<int:pk>/', CategoriaAdminDetailView.as_view(), name='admin-categorias-detail'),
+
+    path('admin/usuarios/', UsuarioAdminListView.as_view(), name='admin-usuarios-list'),
+    path('admin/usuarios/<int:pk>/', UsuarioAdminDetailView.as_view(), name='admin-usuarios-detail'),
+
+    path('admin/obras/', ObraAdminListView.as_view(), name='admin-obras-list'),
+    path('admin/obras/<int:pk>/', ObraAdminDetailView.as_view(), name='admin-obras-detail'),
+
 ]

@@ -10,7 +10,13 @@ type Category = {
   imagen_url: string | null;
 };
 
-const Categorias: React.FC = () => {
+interface Props {
+  columnas?: number;        // Número de columnas (ej: 3, 4, 5)
+  limite?: number;          // Máximo de categorías a mostrar
+  titulo?: string;          // Título personalizado
+}
+
+const CategoriasGrid: React.FC<Props> = ({ columnas = 4, limite, titulo = 'CATEGORÍAS DISPONIBLES' }) => {
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const router = useRouter();
 
@@ -33,12 +39,18 @@ const Categorias: React.FC = () => {
     router.push(`/categoria/${slug}`);
   };
 
+  // Cortar la lista si hay límite
+  const categoriasMostradas = limite ? allCategories.slice(0, limite) : allCategories;
+
+  // Clases dinámicas para columnas
+  const columnasClase = `grid-cols-1 sm:grid-cols-2 md:grid-cols-${columnas}`;
+
   return (
     <div className="flex flex-col items-center px-2 sm:px-4 py-12 bg-[#f7f7f7] text-center">
+      <h1 className="text-4xl font-serif italic font-bold tracking-wider text-center text-black mb-6">{titulo}</h1>
 
-      <h1 className="text-4xl font-serif italic font-bold tracking-wider text-center text-black">CATEGORIAS DISPONIBLES</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 w-full">
-        {allCategories.map((cat) => (
+      <div className={`grid ${columnasClase} gap-6 w-full`}>
+        {categoriasMostradas.map((cat) => (
           <div
             key={cat.id}
             onClick={() => handleClick(cat.slug)}
@@ -55,10 +67,8 @@ const Categorias: React.FC = () => {
           </div>
         ))}
       </div>
-
-      
     </div>
   );
 };
 
-export default Categorias;
+export default CategoriasGrid;

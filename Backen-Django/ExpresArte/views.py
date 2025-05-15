@@ -245,3 +245,28 @@ class CategoriaAdminListView(generics.ListAPIView):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
     permission_classes = [permissions.IsAuthenticated]  # solo admin logueado
+
+class CategoriaAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
+    permission_classes = [permissions.IsAuthenticated]  # o IsAdminUser si quieres restringir más
+
+class UsuarioAdminListView(generics.ListAPIView):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class UsuarioAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class ObraAdminListView(generics.ListAPIView):
+    queryset = Obra.objects.all()
+    serializer_class = ObraSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class ObraAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Obra.objects.all()
+    serializer_class = ObraSerializer
+    permission_classes = [permissions.IsAuthenticated]

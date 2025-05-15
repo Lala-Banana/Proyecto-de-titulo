@@ -1,6 +1,7 @@
 // types.ts
 
 export interface Usuario {
+  is_staff: any;
   id: number;
   nombre: string;
   email: string;
