@@ -38,7 +38,7 @@ export default function LoginForm() {
         localStorage.setItem('access_token', access);
         localStorage.setItem('refresh_token', refresh);
         console.log('✅ Tokens guardados correctamente');
-          await signOut({ redirect: false }); // 🔁 limpia la sesión anterior de Google
+        await signOut({ redirect: false }); // limpia sesión NextAuth si existiera
         window.location.href = '/';
       } else {
         setError('Tokens inválidos o incompletos');
@@ -51,41 +51,76 @@ export default function LoginForm() {
   };
 
   const handleGoogleLogin = async () => {
-    setError('');
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    await signOut({ redirect: false }); // limpia sesión previa
+  setError('');
+  await signOut({ redirect: false });
 
-    const res = await signIn('google', { redirect: false });
-    if (res?.error) {
-      console.error('❌ Error con Google SignIn:', res.error);
-      setError('Error al iniciar sesión con Google');
-      return;
-    }
+  const res = await signIn('google', { redirect: false });
+  console.log('🔁 Resultado de signIn:', res);
 
-    // Esperar la sesión generada por NextAuth (máximo 10 intentos)
-    let session = null;
-    for (let i = 0; i < 10; i++) {
-      session = await getSession();
-      console.log(`🕐 Intento sesión ${i + 1}:`, session);
-      if (session?.user?.email && (session as any).access_token) break;
-      await new Promise((r) => setTimeout(r, 300));
-    }
+  if (res?.error) {
+    console.error('❌ Error al iniciar sesión con Google:', res.error);
+    setError('Error con Google');
+    return;
+  }
 
-    if (
-      session &&
-      (session as any).access_token &&
-      (session as any).refresh_token
-    ) {
-      localStorage.setItem('access_token', (session as any).access_token);
-      localStorage.setItem('refresh_token', (session as any).refresh_token);
-      console.log('✅ Tokens de Google guardados');
+  // 🔄 Esperar sesión
+  let session = null;
+  for (let i = 0; i < 10; i++) {
+    session = await getSession();
+    console.log(`⏳ Intento ${i + 1}:`, session);
+    if (session?.user?.email) break;
+    await new Promise((r) => setTimeout(r, 300));
+  }
+
+  if (!session || !session.user?.email) {
+    console.error('❌ No se obtuvo sesión con email');
+    setError('No se pudo obtener la sesión de Google');
+    return;
+  }
+
+  const user = session.user;
+  const google_id = (session as any).user?.sub || (session as any).sub || '';
+
+  console.log("👤 session.user:", session.user);
+  console.log("🆔 Google ID (from session):", (session.user as any).google_id);
+
+  console.log('🧪 SESSION COMPLETA:', session);
+
+  console.log('✅ Sesión obtenida:', user);
+
+  // 🟢 FORZAR envío al backend
+  console.log('📤 Enviando al backend Django...');
+  try {
+    const response = await fetch('http://localhost:8000/api/usuarios/google/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: user.email,
+        nombre: user.name || '',
+        foto_url: user.image || '',
+        google_id,
+      }),
+    });
+
+    const data = await response.json();
+    console.log('📥 Respuesta de Django:', data);
+
+    if (data?.tokens?.access && data?.tokens?.refresh) {
+      localStorage.setItem('access_token', data.tokens.access);
+      localStorage.setItem('refresh_token', data.tokens.refresh);
+      console.log('✅ Tokens guardados');
       window.location.href = '/';
     } else {
-      console.error('❌ Tokens no disponibles en sesión:', session);
-      setError('No se pudieron recuperar los tokens desde la sesión de Google');
+      console.warn('⚠️ Tokens faltantes en respuesta:', data);
+      setError('No se pudieron obtener los tokens');
     }
-  };
+  } catch (err) {
+    console.error('❌ Error contactando backend:', err);
+    setError('Error al comunicarse con Django');
+  }
+};
+
+
 
   return (
     <div className="min-h-screen w-full bg-white/70 backdrop-blur-lg text-black flex items-center justify-center p-6">

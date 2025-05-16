@@ -9,14 +9,24 @@ const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    // 1. Lógica de inicio de sesión con Google y backend personalizado
-    async signIn({ user, account, profile }) {
+    // 1. Login con Google y envío al backend
+    async signIn({ user, account }) {
       try {
-        console.log("🟢 signIn → user (original):", user);
-        console.log("🟢 signIn → profile:", profile);
+        console.log("🟢 signIn → user:", user);
         console.log("🟢 signIn → account:", account);
+        console.log("🧠 Google ID (account.id):", account?.id);
 
-        if (profile && "sub" in profile && user.email) {
+
+        if (account?.provider === 'google' && user.email) {
+          const googleId = account.id; // ✅ usamos account.id
+          
+          console.log("📤 Enviando a Django:", {
+            email: user.email,
+            nombre: user.name,
+            foto_url: user.image,
+            google_id: account?.id,
+          });
+
           const res = await fetch(
             `${process.env.BACKEND_URL || "http://localhost:8000"}/api/usuarios/google/`,
             {
@@ -26,37 +36,35 @@ const authOptions: AuthOptions = {
                 email: user.email,
                 nombre: user.name,
                 foto_url: user.image,
-                google_id: profile.sub,
+                google_id: googleId, // ✅ enviamos google_id
               }),
             }
           );
 
           const data = await res.json();
-          console.log("🔍 Respuesta backend Django:", data);
+          console.log("📥 Respuesta backend Django:", data);
 
           if (!res.ok || !data.tokens?.access) {
-            console.error("❌ Token no recibido desde Django:", data);
+            console.error("❌ Token no recibido desde backend:", data);
             return false;
           }
 
-          // ✅ Guarda los tokens temporalmente en el `user`
+          // ✅ Guardar tokens y google_id en el user para jwt
           (user as any).access_token = data.tokens.access;
           (user as any).refresh_token = data.tokens.refresh;
-
-          console.log("🟢 signIn → user (con tokens):", user);
+          (user as any).google_id = googleId;
         }
 
         return true;
       } catch (error) {
-        console.error("❌ Error enviando datos a Django:", error);
+        console.error("❌ Error al enviar a Django:", error);
         return false;
       }
     },
 
-    // 2. Guardamos los tokens y datos del usuario en el token JWT
+    // 2. Guardar datos en el JWT
     async jwt({ token, user }) {
-      console.log("🔵 jwt → token IN:", token);
-      console.log("🔵 jwt → user IN:", user);
+      console.log("🔵 jwt IN:", token, user);
 
       if (user) {
         token.nombre = (user as any).name ?? (user as any).nombre;
@@ -64,23 +72,25 @@ const authOptions: AuthOptions = {
         token.email = user.email;
         token.access_token = (user as any).access_token;
         token.refresh_token = (user as any).refresh_token;
+        token.google_id = (user as any).google_id; // ✅ guardar google_id
       }
 
-      console.log("🔵 jwt → token OUT:", token);
+      console.log("🔵 jwt OUT:", token);
       return token;
     },
 
-    // 3. Propagamos datos desde el token hacia la sesión
+    // 3. Propagar datos a la sesión
     async session({ session, token }) {
-      console.log("🟣 session → token IN:", token);
+      console.log("🟣 session IN:", token);
 
       session.user.nombre = token.nombre as string;
       session.user.foto_url = token.foto_url as string;
       session.user.email = token.email as string;
+      (session.user as any).google_id = token.google_id; // ✅ en sesión
       (session as any).access_token = token.access_token;
       (session as any).refresh_token = token.refresh_token;
 
-      console.log("🟣 session → session OUT:", session);
+      console.log("🟣 session OUT:", session);
       return session;
     },
 

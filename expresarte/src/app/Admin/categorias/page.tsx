@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
+import { fetchConAuth } from '@/lib/auth'
 
 interface Categoria {
   id: number
@@ -22,35 +23,16 @@ export default function CategoriasPage() {
   const [imagenUrl, setImagenUrl] = useState('')
   const [editandoId, setEditandoId] = useState<number | null>(null)
   const [mensaje, setMensaje] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const formularioRef = useRef<HTMLDivElement | null>(null)
 
   const getToken = () => localStorage.getItem('access_token') ?? ''
 
   const fetchCategorias = async () => {
-    try {
-      const token = getToken()
-      const res = await fetch(`${BASE}/api/admin/categorias/`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      if (!res.ok) {
-        console.error(`❌ Error al obtener categorías: ${res.status}`)
-        if (res.status === 401) console.warn('🔐 Token expirado o inválido')
-        setCategorias([])
-        return
-      }
-      const data = await res.json()
-      if (Array.isArray(data)) setCategorias(data)
-      else {
-        console.error('❌ Respuesta inesperada del servidor:', data)
-        setCategorias([])
-      }
-    } catch (error) {
-      console.error('❌ Error de red al cargar categorías:', error)
-      setCategorias([])
-    }
+    const token = getToken()
+    const data = await fetchConAuth(`${BASE}/api/admin/categorias/`, token, setError)
+    if (data && Array.isArray(data)) setCategorias(data)
+    else setCategorias([])
   }
 
   useEffect(() => {
@@ -80,7 +62,6 @@ export default function CategoriasPage() {
         console.error(`❌ Error al guardar (${res.status}):`, errorText)
         return
       }
-      // Limpiamos form y recargamos lista
       setNombre('')
       setDescripcion('')
       setSlug('')
@@ -126,6 +107,15 @@ export default function CategoriasPage() {
     } catch (error) {
       console.error('❌ Error de red al eliminar categoría:', error)
     }
+  }
+
+  // ✅ Mostrar solo el mensaje si hay error (como no estar autenticado)
+  if (error) {
+    return (
+      <div className="p-6 bg-white min-h-screen text-black">
+        <div className="bg-red-100 text-red-800 p-4 rounded shadow">{error}</div>
+      </div>
+    )
   }
 
   return (

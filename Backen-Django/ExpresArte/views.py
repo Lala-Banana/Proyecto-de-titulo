@@ -11,7 +11,7 @@ from .serializers import (
     MensajeSerializer, NotificacionSerializer, LogSerializer,
     UsuarioSerializer, RegistroSerializer, LoginSerializer, GoogleLoginSerializer
 )
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAdminUser  # Agregado IsAdminUser
 from .serializers import UsuarioPublicoSerializer
 
 # Función auxiliar para obtener los tokens
@@ -61,7 +61,7 @@ def editar_perfil(request):
     user.nombre = data.get('nombre', user.nombre)
     user.descripcion = data.get('descripcion', user.descripcion)
     user.foto_url = data.get('foto_url', user.foto_url)
-    user.fondo = data.get('fondo', getattr(user, 'fondo', ''))  # Este campo debe estar en el modelo
+    user.fondo = data.get('fondo', getattr(user, 'fondo', ''))
 
     user.save()
     return Response({
@@ -75,12 +75,22 @@ def editar_perfil(request):
 def guardar_usuario_google(request):
     serializer = GoogleLoginSerializer(data=request.data)
     if serializer.is_valid():
+        email = serializer.validated_data['email']
+
+        # 🔎 Verificar si ya existe el usuario
+        try:
+            existente = Usuario.objects.get(email=email)
+            is_staff = existente.is_staff
+        except Usuario.DoesNotExist:
+            is_staff = False  # Por defecto no es admin
+
         usuario, _ = Usuario.objects.update_or_create(
-            email=serializer.validated_data['email'],
+            email=email,
             defaults={
                 'nombre': serializer.validated_data.get('nombre', ''),
                 'foto_url': serializer.validated_data.get('foto_url', ''),
                 'google_id': serializer.validated_data.get('google_id', None),
+                'is_staff': is_staff,  # ⬅️ Mantenemos el rol si ya era admin
             }
         )
         tokens = get_tokens_for_user(usuario)
@@ -205,13 +215,11 @@ class PerfilPublicoView(APIView):
             return Response(serializer.data)
         except Usuario.DoesNotExist:
             return Response({'detail': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-        
 
 class UsuariosPublicosView(ListAPIView):
     queryset = Usuario.objects.filter(is_active=True)
     serializer_class = UsuarioPublicoSerializer
     permission_classes = [AllowAny]
-
 
 class ObraListView(generics.ListAPIView):
     serializer_class = ObraSerializer
@@ -227,8 +235,7 @@ class ObraListView(generics.ListAPIView):
             queryset = queryset.filter(precio__lte=precio_max)
 
         return queryset
-    
-# views.py
+
 def get_queryset(self):
     queryset = Obra.objects.all()
     categoria_id = self.request.query_params.get('categoria_id')
@@ -241,11 +248,11 @@ def get_queryset(self):
 
     return queryset
 
-#ADMIN
-class CategoriaAdminListView(generics.ListCreateAPIView):  # ← CAMBIADO
+# ADMIN con permisos corregidos
+class CategoriaAdminListView(generics.ListCreateAPIView):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def perform_create(self, serializer):
         categoria = serializer.save()
@@ -254,7 +261,7 @@ class CategoriaAdminListView(generics.ListCreateAPIView):  # ← CAMBIADO
 class CategoriaAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def perform_update(self, serializer):
         categoria = serializer.save()
@@ -264,10 +271,10 @@ class CategoriaAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
         registrar_log(self.request.user, 'Categoria', instance.id, 'eliminacion', f"Categoría '{instance.nombre}' eliminada.")
         instance.delete()
 
-class UsuarioAdminListView(generics.ListCreateAPIView):  # ← CAMBIADO
+class UsuarioAdminListView(generics.ListCreateAPIView):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def perform_create(self, serializer):
         usuario = serializer.save()
@@ -276,7 +283,7 @@ class UsuarioAdminListView(generics.ListCreateAPIView):  # ← CAMBIADO
 class UsuarioAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def perform_update(self, serializer):
         usuario = serializer.save()
@@ -286,10 +293,10 @@ class UsuarioAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
         registrar_log(self.request.user, 'Usuario', instance.id, 'eliminacion', f"Usuario '{instance.email}' eliminado.")
         instance.delete()
 
-class ObraAdminListView(generics.ListCreateAPIView):  # ← CAMBIADO
+class ObraAdminListView(generics.ListCreateAPIView):
     queryset = Obra.objects.all()
     serializer_class = ObraSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def perform_create(self, serializer):
         obra = serializer.save()
@@ -298,7 +305,7 @@ class ObraAdminListView(generics.ListCreateAPIView):  # ← CAMBIADO
 class ObraAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Obra.objects.all()
     serializer_class = ObraSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def perform_update(self, serializer):
         obra = serializer.save()
@@ -308,7 +315,7 @@ class ObraAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
         registrar_log(self.request.user, 'Obra', instance.id, 'eliminacion', f"Obra '{instance.titulo}' eliminada.")
         instance.delete()
 
-#REGISTRAR CAMBIOS
+# REGISTRAR CAMBIOS
 def registrar_log(usuario, tabla, id_registro, accion, descripcion=None):
     Log.objects.create(
         usuario=usuario,

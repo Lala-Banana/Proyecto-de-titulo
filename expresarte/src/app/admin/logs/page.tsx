@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { fetchConAuth } from '@/lib/auth'
 
 interface Log {
   id: number
@@ -22,32 +23,30 @@ export default function LogsPage() {
   const getToken = () => localStorage.getItem('access_token') ?? ''
 
   const fetchLogs = async () => {
-    try {
-      const token = getToken()
-      const res = await fetch(`${BASE}/api/logs/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Error al obtener logs')
-      const data = await res.json()
-      setLogs(data)
-    } catch (err) {
-      setError('❌ Error al cargar los registros de log.')
-    } finally {
-      setLoading(false)
-    }
+    const token = getToken()
+    const data = await fetchConAuth(`${BASE}/api/logs/`, token, setError)
+    if (data && Array.isArray(data)) setLogs(data)
+    setLoading(false)
   }
 
   useEffect(() => {
     fetchLogs()
   }, [])
 
+  // ✅ Si hay error (como no estar logueado), solo mostrar eso
+  if (error) {
+    return (
+      <div className="p-6 bg-white min-h-screen text-black">
+        <div className="bg-red-100 text-red-800 p-4 rounded shadow">{error}</div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-6 bg-white min-h-screen text-black">
       <h2 className="text-3xl font-bold mb-6">🗂️ Registros de Cambios (Logs)</h2>
 
       {loading && <p>Cargando registros...</p>}
-      {error && <div className="bg-red-100 text-red-800 p-3 rounded mb-4">{error}</div>}
-
       {!loading && logs.length === 0 && <p>No hay registros disponibles.</p>}
 
       {logs.length > 0 && (

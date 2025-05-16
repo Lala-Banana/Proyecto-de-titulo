@@ -27,6 +27,11 @@ export default function HomePage() {
       if (googleToken) {
         console.log('✅ Login con Google detectado');
         setAuthType('google');
+
+        // ⚠️ Importante: Guardamos en localStorage para unificación
+        localStorage.setItem('access_token', googleToken);
+        localStorage.setItem('refresh_token', (session as any)?.refresh_token || '');
+
       } else if (manualToken) {
         console.log('✅ Login manual detectado');
         setAuthType('manual');
@@ -35,6 +40,7 @@ export default function HomePage() {
         setAuthType('none');
         return;
       }
+
 
       console.log('🔑 Token usado:', finalToken);
 
