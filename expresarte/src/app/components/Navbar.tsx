@@ -75,15 +75,6 @@ const Navbar = () => {
         <div className="relative flex items-center gap-4" ref={dropdownRef}>
           {user ? (
             <>
-              {user.is_staff && (
-                <Link
-                  href="/admin/obras"
-                  className="bg-gray-800 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
-                >
-                  Admin
-                </Link>
-              )}
-
               <Image
                 src={user.foto_url || '/default-avatar.png'}
                 alt="User"
@@ -105,6 +96,13 @@ const Navbar = () => {
                         Perfil
                       </Link>
                     </li>
+                    {user.is_staff && (
+                      <li>
+                        <Link href="/admin/obras" className="block px-4 py-2 hover:bg-gray-100 text-sm">
+                          Admin
+                        </Link>
+                      </li>
+                    )}
                     <li>
                       <button
                         onClick={logout}
