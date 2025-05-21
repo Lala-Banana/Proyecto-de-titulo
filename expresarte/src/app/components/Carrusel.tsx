@@ -1,4 +1,3 @@
-// ✅ Carrusel con transición infinita suave y botones
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,7 +12,7 @@ const slides = [
     subtitle: 'ExpresArte Gallery',
     description: 'Explora emociones a través de cada pincelada y textura.',
     imageUrl: 'https://images.unsplash.com/photo-1534511902651-6ab0ce131f2a?q=80&w=1931&auto=format&fit=crop&ixlib=rb-4.0.3',
-    link: '/categoria/emocional',
+    link: '/categoria/Emocional',
     discount: '50% Off',
   },
   {
@@ -22,7 +21,7 @@ const slides = [
     subtitle: 'Arte Natural',
     description: 'Conecta con la naturaleza a través de nuestras obras.',
     imageUrl: 'https://images.unsplash.com/photo-1605429523419-d828acb941d9?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    link: '/categoria/naturaleza',
+    link: '/categoria/Naturaleza',
     discount: '30% Off',
   },
   {
@@ -31,7 +30,7 @@ const slides = [
     subtitle: 'Ciudad y Cultura',
     description: 'Descubre la belleza oculta en lo cotidiano.',
     imageUrl: 'https://images.unsplash.com/photo-1572947650440-e8a97ef053b2?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    link: '/categoria/urbano',
+    link: '/categoria/Urbano',
     discount: '20% Off',
   },
 ];
@@ -75,18 +74,15 @@ export default function Carrusel() {
               priority
             />
             <div className="absolute inset-0 bg-opacity-30 z-10" />
-            <div className="absolute top-1/2 left-10 transform -translate-y-1/2 text-white max-w-md z-20">
-              <p className="text-sm font-light mb-2">{slide.subtitle}</p>
-              <h2 className="text-5xl font-bold drop-shadow-lg">{slide.title}</h2>
-              <p className="mt-4 text-lg drop-shadow">{slide.description}</p>
-              <div className="mt-4 flex items-center space-x-4">
-                <button className="border border-white px-4 py-2 rounded hover:bg-white hover:text-black transition">
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-center z-20 px-4">
+              <p className="text-sm font-light text-gray-300 mb-2">{slide.subtitle}</p>
+              <h2 className="text-glitch whitespace-nowrap">{slide.title}</h2>
+              <p className="mt-4 text-lg text-gray-200">{slide.description}</p>
+              <div className="mt-4 flex justify-center">
+                <button className="border border-white px-6 py-2 rounded hover:bg-white hover:text-black transition">
                   Ver más
                 </button>
               </div>
-              <p className="absolute top-0 right-10 font-bold text-white">
-                {`Descuento ${slide.discount}`}
-              </p>
             </div>
           </Link>
         ))}
@@ -110,9 +106,7 @@ export default function Carrusel() {
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`w-3 h-3 rounded-full ${
-              index === current ? 'bg-white' : 'bg-gray-400'
-            }`}
+            className={`w-3 h-3 rounded-full ${index === current ? 'bg-white' : 'bg-gray-400'}`}
           />
         ))}
       </div>

@@ -84,10 +84,10 @@ export default function PerfilUsuario({
     setTimeout(() => {
       containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     }, 10);
-  };
+  }; 
 
   return (
-    <div className="flex flex-col lg:flex-row h-auto lg:h-[90vh] max-w-screen-xl mx-auto bg-white shadow-lg rounded-4xl">
+    <div className="flex flex-col lg:flex-row h-auto lg:h-[90vh] max-w-screen-xl mx-auto bg-white/50 bg-white shadow-lg rounded-4xl">
       {/* Perfil */}
       <div className="w-full lg:w-[320px] p-6 border-b lg:border-b-0 lg:border-r border-gray-200">
         <div className="flex flex-col items-center">
@@ -149,12 +149,12 @@ export default function PerfilUsuario({
 
       {/* Obras */}
       <div className="flex-1 overflow-hidden">
-        <div className="sticky top-0 bg-white z-10 p-6 pb-2 border-b border-black">
-          <div className="w-full md:w-2/3 mx-auto border border-black rounded-md overflow-hidden">
+        <div className=" bg-white/20 z-10 p-6 pb-2  border-black">
+          <div className=" mx-auto  bg-white/20 border-black rounded-md overflow-hidden">
             {['venta', 'noVenta'].map((tab) => (
               <button
                 key={tab}
-                className={`w-1/2 py-3 font-semibold text-sm ${
+                className={`w-1/2 py-3  font-semibold text-sm ${
                   activeTab === tab ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'
                 }`}
                 onClick={() => reiniciarScrollYCantidad(tab as 'venta' | 'noVenta')}

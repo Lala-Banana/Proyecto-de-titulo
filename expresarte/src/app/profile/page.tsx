@@ -58,7 +58,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="relative z-10 py-12 px-4 text-white flex flex-col items-center">
-          <PerfilUsuario
+          <PerfilUsuario 
             user={user}
             token={token || ''}
             obrasEnVenta={obrasEnVenta}
