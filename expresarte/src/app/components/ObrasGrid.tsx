@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
+import Image from 'next/image';
 
 interface Obra {
   id: number;
@@ -15,7 +16,7 @@ interface Obra {
 interface Props {
   obras: Obra[];
   slug: string;
-  columnas?: number; // 🆕 Nueva prop opcional
+  columnas?: number; // Número de columnas (por defecto 4)
 }
 
 export default function ObrasGrid({ obras, slug, columnas = 4 }: Props) {
@@ -25,14 +26,14 @@ export default function ObrasGrid({ obras, slug, columnas = 4 }: Props) {
     (obraId: number) => {
       router.push(`/publicacion/${obraId}`);
     },
-    [router, slug]
+    [router]
   );
 
   if (!obras || obras.length === 0) {
     return <p className="text-center text-gray-600 mt-8">No hay obras disponibles para mostrar.</p>;
   }
 
-  // Generar clases dinámicamente
+  // Clases dinámicas para las columnas
   const gridColsClass = `grid-cols-1 sm:grid-cols-2 md:grid-cols-${columnas}`;
 
   return (
@@ -42,9 +43,19 @@ export default function ObrasGrid({ obras, slug, columnas = 4 }: Props) {
           key={obra.id}
           onClick={() => handleClickObra(obra.id)}
           className="relative bg-gray-100 rounded shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
-          style={{ width: '200px', height: '200px' }}
+          style={{ width: 200, height: 200 }}
         >
-          <img src={obra.imagen_url} alt={obra.titulo} className="w-full h-full object-cover" />
+          {/* Imagen optimizada con next/image, alta calidad y recorte */}
+          <Image
+            src={obra.imagen_url}
+            alt={obra.titulo}
+            fill
+            sizes="200px"
+            quality={200}
+            className="object-cover"
+          />
+
+          {/* Precio si está en venta */}
           {obra.en_venta && (
             <div className="absolute top-1 left-1 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
               ${obra.precio}

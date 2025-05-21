@@ -117,12 +117,12 @@ export default function PublicacionPage() {
                 alt={obra.titulo}
                 width={1920}
                 height={1080}
-                className="w-full h-96 object-cover"
+                className="w-full h-120 object-contain"
                 priority
               />
             </div>
-            <div className="flex space-x-4 overflow-x-auto">
-              {Array(4)
+            <div className="flex space-x-20 overflow-x-auto">
+              {Array(5)
                 .fill(obra.imagen_url)
                 .map((src, i) => (
                   <div
@@ -133,7 +133,7 @@ export default function PublicacionPage() {
                       src={src}
                       alt={`${obra.titulo} mini ${i}`}
                       width={112}
-                      height={112}
+                      height={212}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -142,8 +142,8 @@ export default function PublicacionPage() {
           </section>
 
           {/* Sidebar info sobre obra y artista */}
-          <aside className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-lg space-y-4">
+          <aside className="space-y-2">
+            <div className="bg-white p-3 rounded-xl shadow-lg space-y-4">
               <h1 className="text-2xl font-bold">{obra.titulo}</h1>
               <p className="text-gray-700">{obra.descripcion}</p>
               {obra.en_venta ? (
@@ -219,17 +219,17 @@ export default function PublicacionPage() {
 
         {/* Sección de obras relacionadas */}
         {related.length > 0 && (
-          <section className="mt-12">
-            <h3 className="text-xl font-semibold mb-4">Obras en la misma categoría</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-4">
+          <section className="mt-5">
+            <h3 className="text-xl font-semibold mb-2">Obras en la misma categoría</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-10">
               {related.map(o => (
                 <Link key={o.id} href={`/publicacion/${o.id}`}>
-                  <div className="bg-white rounded-lg overflow-hidden shadow hover:shadow-md transition">
+                  <div className="bg-white text-black border-b-black rounded-lg overflow-hidden shadow hover:shadow-md transition">
                     <Image
                       src={o.imagen_url}
                       alt={o.titulo}
                       width={300}
-                      height={169}
+                      height={300}
                       className="w-full h-24 object-cover"
                     />
                     <p className="text-sm p-2 truncate">{o.titulo}</p>
