@@ -105,12 +105,6 @@ class LogSerializer(serializers.ModelSerializer):
         model = Log
         fields = ['id', 'tabla', 'id_registro', 'accion', 'descripcion', 'fecha', 'usuario_nombre', 'usuario_email']
 
-#LALA ==================
-class ObraSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Obra
-        fields = '__all__'
-
 
 class UsuarioPublicoSerializer(serializers.ModelSerializer):
     class Meta:

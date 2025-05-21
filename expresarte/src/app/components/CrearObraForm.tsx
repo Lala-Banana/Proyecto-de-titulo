@@ -16,13 +16,13 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [precio, setPrecio] = useState('');
-  const [imagenUrl, setImagenUrl] = useState('');
   const [categoriaId, setCategoriaId] = useState<number | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const [enVenta, setEnVenta] = useState(true);
   const [stock, setStock] = useState(1);
+  const [imagenArchivo, setImagenArchivo] = useState<File | null>(null);
 
   useEffect(() => {
     const fetchCategorias = async () => {
@@ -34,11 +34,9 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
         } else if (Array.isArray(data.categorias)) {
           setCategorias(data.categorias);
         } else {
-          console.error('⚠️ Formato inesperado de categorías:', data);
           setError('No se pudieron cargar las categorías.');
         }
       } catch (err) {
-        console.error('❌ Error al cargar categorías:', err);
         setError('Error al conectar con el servidor.');
       }
     };
@@ -46,33 +44,58 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
     fetchCategorias();
   }, [token]);
 
+  // ✅ Subida a Cloudinary
+  const uploadImageToCloudinary = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'expresarte_preset');
+
+    const res = await fetch('https://api.cloudinary.com/v1_1/drb5jrimz/image/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error?.message || 'Error al subir imagen');
+  }
+
+  return data.secure_url;
+};
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!token) {
-      setError('No estás autenticado. Inicia sesión nuevamente.');
+    if (!titulo || !descripcion || !categoriaId || (enVenta && (!precio || !stock))) {
+      setError('Completa todos los campos requeridos.');
       return;
     }
 
-    if (!titulo || !descripcion || !imagenUrl || !categoriaId || (enVenta && !precio)) {
-      setError('Todos los campos obligatorios deben completarse.');
+    if (!imagenArchivo) {
+      setError('Debes subir una imagen.');
       return;
     }
-
-    const body = {
-      titulo,
-      descripcion,
-      precio: enVenta ? precio : 0,
-      imagen_url: imagenUrl,
-      en_venta: enVenta,
-      destacada: false,
-      usuario: usuarioId,
-      categoria: categoriaId,
-      stock: enVenta ? stock : 1,
-    };
 
     try {
+      const imagenUrl = await uploadImageToCloudinary(imagenArchivo);
+      console.log('✅ Imagen subida a Cloudinary:', imagenUrl);
+
+      const body = {
+        titulo,
+        descripcion,
+        precio: enVenta ? precio : 0,
+        imagen_url: imagenUrl,
+        en_venta: enVenta,
+        destacada: false,
+        usuario: usuarioId,
+        categoria: categoriaId,
+        stock: enVenta ? stock : 1,
+      };
+
+      console.log('📦 Body enviado:', body);
+
       const res = await fetch('http://localhost:8000/api/obras/', {
         method: 'POST',
         headers: {
@@ -83,25 +106,27 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
       });
 
       const responseData = await res.json();
+      console.log('📥 Backend respondió:', responseData);
+
 
       if (!res.ok) {
-        console.error('❌ Error del backend:', responseData);
         throw new Error('Error al crear la obra');
       }
 
-      // limpiar campos
+      // Limpiar formulario
       setTitulo('');
       setDescripcion('');
       setPrecio('');
-      setImagenUrl('');
       setCategoriaId(null);
+      setImagenArchivo(null);
       setEnVenta(true);
       setStock(1);
       onObraCreada();
-      window.location.reload();
+      //window.location.reload();
+
     } catch (err) {
-      console.error('❌ Error al guardar obra:', err);
-      setError('No se pudo guardar la obra. Revisa los campos y vuelve a intentarlo.');
+      console.error('❌ Error al subir imagen o guardar obra:', err);
+      setError('No se pudo guardar la obra.');
     }
   };
 
@@ -128,15 +153,6 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
         required
       />
 
-      <input
-        type="text"
-        placeholder="URL de la imagen"
-        value={imagenUrl}
-        onChange={(e) => setImagenUrl(e.target.value)}
-        className="w-full px-3 py-2 border rounded text-black"
-        required
-      />
-
       <select
         value={categoriaId ?? ''}
         onChange={(e) => setCategoriaId(Number(e.target.value))}
@@ -151,7 +167,22 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
         ))}
       </select>
 
-      {/* Sección de venta */}
+      {/* Imagen */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Imagen de la obra</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            if (e.target.files && e.target.files[0]) {
+              setImagenArchivo(e.target.files[0]);
+            }
+          }}
+          required
+        />
+      </div>
+
+      {/* Opciones de venta */}
       <div className="mt-4 space-y-2">
         <p className="font-semibold text-gray-800 text-center">Opciones de venta</p>
 
@@ -171,11 +202,8 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
         {enVenta && (
           <>
             <div>
-              <label htmlFor="precio" className="block text-sm font-medium text-gray-700 mb-1">
-                Precio
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
               <input
-                id="precio"
                 type="number"
                 placeholder="Precio"
                 value={precio}
@@ -187,11 +215,8 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
             </div>
 
             <div>
-              <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-1">
-                Stock disponible
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Stock disponible</label>
               <input
-                id="stock"
                 type="number"
                 placeholder="Cantidad disponible"
                 value={stock}

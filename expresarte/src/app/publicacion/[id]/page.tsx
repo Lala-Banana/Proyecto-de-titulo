@@ -112,14 +112,22 @@ export default function PublicacionPage() {
           {/* Galería principal con full-HD scaled */}
           <section className="lg:col-span-2 space-y-6">
             <div className="rounded-xl overflow-hidden shadow-lg bg-white">
+              {obra.imagen_url ? (
               <Image
                 src={obra.imagen_url}
                 alt={obra.titulo}
-                width={1920}
-                height={1080}
-                className="w-full h-120 object-contain"
-                priority
+                width={500}
+                height={300}
+                unoptimized
+                className="object-cover"
               />
+
+            ) : (
+              <div className="w-full h-64 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
+                Sin imagen disponible
+              </div>
+            )}
+
             </div>
             <div className="flex space-x-20 overflow-x-auto">
               {Array(5)

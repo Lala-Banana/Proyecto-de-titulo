@@ -1,5 +1,8 @@
+// next.config.ts
+
 const nextConfig = {
   images: {
+    domains: ['res.cloudinary.com', 'images.unsplash.com'],
     remotePatterns: [
       { 
         protocol: 'https', 
@@ -33,17 +36,17 @@ const nextConfig = {
       },
       { 
         protocol: 'https', 
-        hostname: 'link-de-imagen.com',  // Aquí agregamos el nuevo dominio
+        hostname: 'link-de-imagen.com',
         pathname: '/**'
       },
       { 
         protocol: 'https', 
-        hostname: 'i.pinimg.com',  // Aquí agregamos el nuevo dominio
+        hostname: 'i.pinimg.com',
         pathname: '/**'
       },
       { 
         protocol: 'https', 
-        hostname: 'static.wikia.nocookie.net',  // Aquí agregamos el nuevo dominio
+        hostname: 'static.wikia.nocookie.net',
         pathname: '/**'
       },
       {
@@ -70,4 +73,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

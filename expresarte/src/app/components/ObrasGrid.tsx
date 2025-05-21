@@ -45,7 +45,9 @@ export default function ObrasGrid({ obras, slug, columnas = 4 }: Props) {
           className="relative bg-gray-100 rounded shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
           style={{ width: 200, height: 200 }}
         >
+          
           {/* Imagen optimizada con next/image, alta calidad y recorte */}
+          {obra.imagen_url ? (
           <Image
             src={obra.imagen_url}
             alt={obra.titulo}
@@ -53,7 +55,13 @@ export default function ObrasGrid({ obras, slug, columnas = 4 }: Props) {
             sizes="200px"
             quality={200}
             className="object-cover"
+            unoptimized
           />
+        ) : (
+          <div className="flex items-center justify-center w-full h-full bg-gray-300 text-sm text-gray-600">
+            Sin imagen
+          </div>
+        )}
 
           {/* Precio si está en venta */}
           {obra.en_venta && (
