@@ -5,8 +5,8 @@ import { getSession } from 'next-auth/react';
 import NavbarCombined from './components/Navbar';
 import Carrusel from './components/Carrusel';
 import Categorias from './components/Categorias';
-import Footer from './components/Footer';
 import UsuariosAleatorios from './components/UsuariosAleatorioHome';
+import Footer from './components/Footer';
 
 export default function HomePage() {
   const [userInfo, setUserInfo] = useState<any>(null);
@@ -16,48 +16,30 @@ export default function HomePage() {
   useEffect(() => {
     const loadAuth = async () => {
       const session = await getSession();
-      console.log('🟣 [NextAuth] session:', session);
-
       const googleToken = (session as any)?.access_token;
-      const manualToken = localStorage.getItem('access_token');
-
+      const manualToken = typeof window !== 'undefined'
+        ? localStorage.getItem('access_token')
+        : null;
       const finalToken = googleToken || manualToken;
-      setToken(finalToken || null);
+      setToken(finalToken);
 
       if (googleToken) {
-        console.log('✅ Login con Google detectado');
         setAuthType('google');
-
-        // ⚠️ Importante: Guardamos en localStorage para unificación
         localStorage.setItem('access_token', googleToken);
         localStorage.setItem('refresh_token', (session as any)?.refresh_token || '');
-
       } else if (manualToken) {
-        console.log('✅ Login manual detectado');
         setAuthType('manual');
       } else {
-        console.log('❌ No hay login activo');
         setAuthType('none');
         return;
       }
 
-
-      console.log('🔑 Token usado:', finalToken);
-
       try {
         const res = await fetch('http://localhost:8000/api/me/', {
-          headers: {
-            Authorization: `Bearer ${finalToken}`,
-          },
+          headers: { Authorization: `Bearer ${finalToken}` },
         });
-
-        if (!res.ok) {
-          console.warn('⚠️ Token inválido o expirado');
-          return;
-        }
-
+        if (!res.ok) return;
         const data = await res.json();
-        console.log('👤 Usuario autenticado:', data);
         setUserInfo(data);
       } catch (err) {
         console.error('❌ Error al obtener /api/me/:', err);
@@ -71,32 +53,15 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <NavbarCombined />
       <Carrusel />
-      
-      <Categorias />
 
+      {/* Mostramos solo 4 categorías */}
+      <Categorias
+        columnas={4}
+        limite={4}
+        titulo="CATEGORÍAS DESTACADAS"
+      />
 
-          
-
-      {/*}
-        <div className="mt-10 p-4 bg-white rounded-lg shadow text-sm">
-          <p><strong>🔍 Tipo de autenticación:</strong> {authType}</p>
-          <p><strong>🔐 Token:</strong></p>
-          <code className="break-words">{token || 'Ninguno'}</code>
-        </div>
-
-        {userInfo && (
-          <div className="mt-6 p-4 bg-green-50 border border-green-300 rounded-lg">
-            <p><strong>👤 Usuario autenticado:</strong></p>
-            <p>Nombre: {userInfo.nombre}</p>
-            <p>Email: {userInfo.email}</p>
-            <p>ID: {userInfo.id}</p>
-            <p>Tipo usuario: {userInfo.tipo_usuario || 'No especificado'}</p>
-            <p>Ubicación: {userInfo.ubicacion || 'No disponible'}</p>
-          </div>
-        )}
-        */}
-
-        <UsuariosAleatorios />
+      <UsuariosAleatorios />
       <Footer />
     </div>
   );

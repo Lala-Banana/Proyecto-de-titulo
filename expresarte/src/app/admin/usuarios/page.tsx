@@ -143,6 +143,7 @@ export default function UsuariosAdminPage() {
               <td className="p-3">{user.email}</td>
               <td className="p-3">
                 {user.foto_url ? (
+                  <a href={`/usuarios/${user.id}`}>
                   <Image
                     src={user.foto_url}
                     alt={user.nombre}
@@ -150,6 +151,7 @@ export default function UsuariosAdminPage() {
                     height={40}
                     className="rounded-full object-cover"
                   />
+                  </a>
                 ) : (
                   <span className="text-gray-400">Sin foto</span>
                 )}

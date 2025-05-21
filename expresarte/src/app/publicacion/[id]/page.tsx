@@ -3,17 +3,19 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import NavbarCombined from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
 
 interface Usuario {
+  id: number;
   nombre: string;
   email: string;
+  telefono?: string | null;
   rut: string;
   ubicacion: string;
   descripcion: string;
-  foto_url: string;
-  fondo: string;
+  foto_url?: string;
 }
 
 interface Obra {
@@ -24,160 +26,222 @@ interface Obra {
   precio: number;
   en_venta: boolean;
   usuario: number;
+  categoria_slug: string;
 }
 
-export default function ObraPage() {
+export default function PublicacionPage() {
   const router = useRouter();
   const pathname = usePathname();
   const [obra, setObra] = useState<Obra | null>(null);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [related, setRelated] = useState<Obra[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const idMatch = pathname.match(/\/publicacion\/(\d+)/);
-  const obraId = idMatch ? idMatch[1] : null;
+  const obraId = pathname.split('/').pop();
 
+  // Fetch obra and usuario
   useEffect(() => {
-    const fetchData = async () => {
+    (async () => {
       if (!obraId) {
         setError('ID de obra inválido');
         setLoading(false);
         return;
       }
-
       try {
         const res = await fetch(`http://localhost:8000/api/obras/${obraId}/`);
-        if (!res.ok) {
-          const txt = await res.text();
-          setError(`Error al cargar obra: ${txt}`);
-        } else {
-          const obraData = await res.json();
-          console.log('🎨 Obra cargada:', obraData);
-          setObra(obraData);
+        if (!res.ok) throw new Error(await res.text());
+        const obraData: Obra = await res.json();
+        setObra(obraData);
 
-          const userRes = await fetch(`http://localhost:8000/api/perfil-publico/${obraData.usuario}/`);
-          if (userRes.ok) {
-            const usuarioData = await userRes.json();
-            console.log('👤 Usuario público cargado:', usuarioData);
-            setUsuario(usuarioData);
-          }
+        // fetch usuario
+        const userRes = await fetch(
+          `http://localhost:8000/api/perfil-publico/${obraData.usuario}/`
+        );
+        if (userRes.ok) {
+          const usuarioData: Usuario = await userRes.json();
+          setUsuario(usuarioData);
+        }
+
+        // fetch related by same category
+        const relRes = await fetch(
+          `http://localhost:8000/api/obras/?categoria=${obraData.categoria_slug}`
+        );
+        if (relRes.ok) {
+          let relList: Obra[] = await relRes.json();
+          relList = relList.filter(o => o.id !== obraData.id);
+          // shuffle
+          relList.sort(() => 0.5 - Math.random());
+          setRelated(relList.slice(0, 10));
         }
       } catch (err: any) {
-        console.error('❌ Error general:', err);
-        setError('Error de red al cargar la obra.');
+        console.error(err);
+        setError('No se pudo cargar la obra.');
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchData();
+    })();
   }, [obraId]);
 
-  if (loading) return <p className="text-center mt-20">Cargando…</p>;
-  if (error) return <p className="text-center mt-20 text-red-600">{error}</p>;
-  if (!obra) return <p className="text-center mt-20">Obra no encontrada.</p>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-screen">Cargando…</div>
+    );
+  if (error)
+    return (
+      <div className="flex items-center justify-center h-screen text-red-600">
+        {error}
+      </div>
+    );
+  if (!obra)
+    return (
+      <div className="flex items-center justify-center h-screen">
+        Obra no encontrada.
+      </div>
+    );
 
   return (
-    <div className="bg-white" style={{ minHeight: '100vh' }}>
-      <div className="bg-white shadow">
-        <NavbarCombined />
-        <br />
-        <br />
-      </div>
+    <div className="flex flex-col min-h-screen bg-white">
+      <NavbarCombined />
 
-      <div className="bg-white min-h-screen text-gray-900">
-        <div className="max-w-6xl mx-auto w-full mt-[30px] px-4 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Columna de imagen principal */}
-          <div className="lg:col-span-2">
-            <div className="bg-white w-[400px] h-[400px] mx-auto flex items-center justify-center rounded-lg shadow">
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <br />
+        <br />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Galería principal con full-HD scaled */}
+          <section className="lg:col-span-2 space-y-6">
+            <div className="rounded-xl overflow-hidden shadow-lg bg-white">
               <Image
                 src={obra.imagen_url}
                 alt={obra.titulo}
-                width={1080}
+                width={1920}
                 height={1080}
-                className="object-contain max-w-full max-h-full"
+                className="w-full h-96 object-cover"
+                priority
               />
             </div>
-
-            <div className="flex gap-4 mt-4 overflow-x-auto">
-              {[1, 2, 3, 4].map((_, i) => (
-                <Image
-                  key={i}
-                  src={obra.imagen_url}
-                  alt={`mini-${i}`}
-                  width={100}
-                  height={100}
-                  className="rounded object-cover"
-                />
-              ))}
-            </div>
-
-            <div className="mt-10">
-              <h3 className="text-xl font-semibold mb-4">Otras obras del artista</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map((_, i) => (
-                  <Image
+            <div className="flex space-x-4 overflow-x-auto">
+              {Array(4)
+                .fill(obra.imagen_url)
+                .map((src, i) => (
+                  <div
                     key={i}
-                    src={obra.imagen_url}
-                    alt={`other-${i}`}
-                    width={100}
-                    height={100}
-                    className="rounded object-cover"
-                  />
+                    className="flex-shrink-0 w-28 h-28 rounded-lg overflow-hidden shadow-sm bg-white"
+                  >
+                    <Image
+                      src={src}
+                      alt={`${obra.titulo} mini ${i}`}
+                      width={112}
+                      height={112}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 ))}
-              </div>
             </div>
-          </div>
+          </section>
 
-          {/* Columna derecha - Info de la obra y artista */}
-          <div className="lg:col-span-1 bg-white p-4 rounded shadow">
-            <h1 className="text-3xl font-bold mb-4">{obra.titulo}</h1>
-            <p className="mb-4 text-gray-700">{obra.descripcion}</p>
-
-            {obra.en_venta ? (
-              <p className="text-2xl font-semibold text-green-600 mb-4">${obra.precio}</p>
-            ) : (
-              <p className="text-xl font-semibold text-gray-500 mb-4">No está en venta</p>
-            )}
+          {/* Sidebar info sobre obra y artista */}
+          <aside className="space-y-6">
+            <div className="bg-white p-6 rounded-xl shadow-lg space-y-4">
+              <h1 className="text-2xl font-bold">{obra.titulo}</h1>
+              <p className="text-gray-700">{obra.descripcion}</p>
+              {obra.en_venta ? (
+                <p className="text-3xl font-semibold text-green-600">
+                  ${obra.precio}
+                </p>
+              ) : (
+                <span className="inline-block px-3 py-1 bg-gray-200 rounded-full text-gray-600">
+                  No en venta
+                </span>
+              )}
+            </div>
 
             {usuario && (
-              <div className="border-t border-gray-200 pt-4 mt-4">
-                <h2 className="text-xl font-semibold mb-2">Artista</h2>
-                <div className="flex items-center gap-4 mb-2">
+              <div className="bg-white p-6 rounded-xl shadow-lg">
+                <h2 className="text-xl font-semibold mb-4">Artista</h2>
+                <div className="flex items-center space-x-4 mb-4">
                   <Image
                     src={usuario.foto_url || '/default-avatar.png'}
                     alt={usuario.nombre}
-                    width={50}
-                    height={50}
+                    width={64}
+                    height={64}
                     className="rounded-full object-cover"
                   />
                   <div>
-                    <p className="font-semibold">{usuario.nombre}</p>
-                    <p className="text-sm text-gray-600">{usuario.email}</p>
+                    <Link
+                      href={`/usuarios/${usuario.id}`}
+                      className="text-lg font-medium text-blue-600 hover:underline"
+                    >
+                      {usuario.nombre}
+                    </Link>
+                    <p className="text-gray-500 text-sm">{usuario.email}</p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-700">RUT: {usuario.rut}</p>
-                <p className="text-sm text-gray-700">Ubicación: {usuario.ubicacion}</p>
-                <p className="text-sm text-gray-700 mt-2">{usuario.descripcion}</p>
+                <ul className="space-y-2 text-gray-700 text-sm">
+                  <li>
+                    <strong>RUT:</strong> {usuario.rut}
+                  </li>
+                  <li>
+                    <strong>Ubicación:</strong> {usuario.ubicacion}
+                  </li>
+                </ul>
+                <p className="mt-4 text-gray-600">{usuario.descripcion}</p>
+                <div className="mt-6 space-y-2">
+                  <a
+                    href={`mailto:${usuario.email}`}
+                    className="block w-full text-center bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                  >
+                    Enviar correo
+                  </a>
+                  {usuario.telefono && (
+                    <a
+                      href={`https://api.whatsapp.com/send?phone=${usuario.telefono}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full text-center bg-green-500 text-white py-2 rounded hover:bg-green-600"
+                    >
+                      WhatsApp
+                    </a>
+                  )}
+                </div>
               </div>
             )}
 
-            <div className="flex gap-4 mt-6 mb-6">
-              <button className="flex-1 bg-black text-white py-2 rounded hover:bg-gray-800">Comprar</button>
-              <button className="flex-1 border border-black text-black py-2 rounded hover:bg-gray-100">Chat</button>
-            </div>
-
             <button
               onClick={() => router.back()}
-              className="w-full px-4 py-2 bg-gray-800 text-white rounded hover:bg-black transition"
+              className="w-full text-center py-2 rounded border border-gray-300 hover:bg-gray-100 transition"
             >
               ← Volver
             </button>
-          </div>
+          </aside>
         </div>
 
-        <Footer />
-      </div>
+        {/* Sección de obras relacionadas */}
+        {related.length > 0 && (
+          <section className="mt-12">
+            <h3 className="text-xl font-semibold mb-4">Obras en la misma categoría</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-4">
+              {related.map(o => (
+                <Link key={o.id} href={`/publicacion/${o.id}`}>
+                  <div className="bg-white rounded-lg overflow-hidden shadow hover:shadow-md transition">
+                    <Image
+                      src={o.imagen_url}
+                      alt={o.titulo}
+                      width={300}
+                      height={169}
+                      className="w-full h-24 object-cover"
+                    />
+                    <p className="text-sm p-2 truncate">{o.titulo}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
+
+      <Footer />
     </div>
   );
 }

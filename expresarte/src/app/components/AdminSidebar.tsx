@@ -16,8 +16,10 @@ export default function AdminSidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-64 min-h-screen bg-white border-r px-4 py-6 flex flex-col justify-between">
+    <aside className="w-60 min-h-screen bg-gray-200 border-r px-4 py-6 flex flex-col justify-between">
       <div>
+        <br />
+
         <h1 className="text-2xl text-black font-bold mb-6">🎨 Admin</h1>
         <nav className="flex flex-col text-black space-y-4">
           {links.map(({ href, label, icon }) => (

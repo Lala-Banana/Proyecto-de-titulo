@@ -12,6 +12,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             'id',
             'nombre',
             'email',
+            'telefono',
             'google_id',
             'foto_url',
             'descripcion',
@@ -122,5 +123,6 @@ class UsuarioPublicoSerializer(serializers.ModelSerializer):
             'descripcion',
             'foto_url',
             'fondo',
+            'telefono',
             'ubicacion',
         ]

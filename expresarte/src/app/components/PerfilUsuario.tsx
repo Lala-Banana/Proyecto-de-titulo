@@ -35,6 +35,7 @@ interface Props {
   obrasNoVenta: Obra[];
   activeTab: 'venta' | 'noVenta';
   setActiveTab: (tab: 'venta' | 'noVenta') => void;
+  isOwner?: boolean; // ✅ NUEVA PROP
 }
 
 export default function PerfilUsuario({
@@ -44,6 +45,7 @@ export default function PerfilUsuario({
   obrasNoVenta,
   activeTab,
   setActiveTab,
+  isOwner = true,
 }: Props) {
   const router = useRouter();
   const [user, setUser] = useState<User>(userProp);
@@ -53,7 +55,7 @@ export default function PerfilUsuario({
 
   useEffect(() => {
     const fetchUser = async () => {
-      if (!token) return;
+      if (!token || !isOwner) return;
       try {
         const res = await fetch('http://localhost:8000/api/me/', {
           headers: { Authorization: `Bearer ${token}` },
@@ -71,7 +73,7 @@ export default function PerfilUsuario({
       }
     };
     fetchUser();
-  }, [token]);
+  }, [token, isOwner]);
 
   const allObras = activeTab === 'venta' ? obrasEnVenta : obrasNoVenta;
   const obrasMostradas = allObras.slice(0, cantidadVisible);
@@ -109,23 +111,25 @@ export default function PerfilUsuario({
           <p className="text-sm text-gray-700 text-center mb-2">Región: <span className="font-semibold">{user.ubicacion}</span></p>
           <p className="text-sm text-gray-600 text-center mb-4">{user.descripcion || 'Sin descripción'}</p>
 
-          <div className="flex flex-col gap-4 mb-6 w-full">
-            <button
-              onClick={() => {
-                router.push('/profile/editar');
-                router.refresh();
-              }}
-              className="bg-black text-white px-4 py-2 rounded hover:bg-rose-950 transition text-sm"
-            >
-              Editar perfil
-            </button>
-            <button
-              onClick={() => setMostrarFormObra(true)}
-              className="bg-black text-white px-4 py-2 rounded hover:bg-rose-950 transition text-sm"
-            >
-              Agregar obra
-            </button>
-          </div>
+          {isOwner && (
+            <div className="flex flex-col gap-4 mb-6 w-full">
+              <button
+                onClick={() => {
+                  router.push('/profile/editar');
+                  router.refresh();
+                }}
+                className="bg-black text-white px-4 py-2 rounded hover:bg-rose-950 transition text-sm"
+              >
+                Editar perfil
+              </button>
+              <button
+                onClick={() => setMostrarFormObra(true)}
+                className="bg-black text-white px-4 py-2 rounded hover:bg-rose-950 transition text-sm"
+              >
+                Agregar obra
+              </button>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4 w-full">
             {[
@@ -146,7 +150,7 @@ export default function PerfilUsuario({
       {/* Obras */}
       <div className="flex-1 overflow-hidden">
         <div className="sticky top-0 bg-white z-10 p-6 pb-2 border-b border-black">
-          <div className="w-full md:w-2/3 mx-auto border  border-black rounded-md overflow-hidden">
+          <div className="w-full md:w-2/3 mx-auto border border-black rounded-md overflow-hidden">
             {['venta', 'noVenta'].map((tab) => (
               <button
                 key={tab}
@@ -177,7 +181,7 @@ export default function PerfilUsuario({
           )}
         </div>
 
-        {mostrarFormObra && (
+        {isOwner && mostrarFormObra && (
           <div className="absolute top-0 left-0 w-full h-full bg-white bg-opacity-90 z-50 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-2xl">
               <CrearObraForm

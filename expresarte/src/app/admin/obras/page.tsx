@@ -106,7 +106,7 @@ export default function ObrasAdminPage() {
   };
 
   const irADetalle = (obraId: number) => {
-    router.push(`/app/obra/${obraId}`);
+    router.push(`/publicacion/${obraId}`);
   };
 
   // ✅ Mostrar solo mensaje si no hay acceso

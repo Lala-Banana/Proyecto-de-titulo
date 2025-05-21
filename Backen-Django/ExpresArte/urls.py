@@ -11,7 +11,8 @@ from .views import (
     LogListView,
     ObrasPorCategoriaView , # ← Correctamente agregado
     editar_perfil,
-    CategoriaAdminListView
+    CategoriaAdminListView,
+    ObrasPorUsuarioView
 
 )
 
@@ -71,5 +72,7 @@ urlpatterns = [
 
     path('admin/obras/', ObraAdminListView.as_view(), name='admin-obras-list'),
     path('admin/obras/<int:pk>/', ObraAdminDetailView.as_view(), name='admin-obras-detail'),
+
+     path('usuarios/<int:usuario_id>/obras/', ObrasPorUsuarioView.as_view(), name='obras-por-usuario'),
 
 ]

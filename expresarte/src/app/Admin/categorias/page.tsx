@@ -120,6 +120,7 @@ export default function CategoriasPage() {
 
   return (
     <div className="p-4 bg-white min-h-screen text-black">
+      
       <h2 className="text-3xl font-bold mb-6">Categorías</h2>
 
       {mensaje && (
@@ -196,6 +197,7 @@ export default function CategoriasPage() {
               <td className="p-3">{cat.id}</td>
               <td className="p-3">
                 {cat.imagen_url ? (
+                  <a href={`/categoria/${cat.slug}`}>
                   <Image
                     src={cat.imagen_url}
                     alt={cat.nombre}
@@ -203,6 +205,7 @@ export default function CategoriasPage() {
                     height={50}
                     className="rounded object-cover"
                   />
+                  </a>
                 ) : (
                   <span className="text-gray-400">Sin imagen</span>
                 )}

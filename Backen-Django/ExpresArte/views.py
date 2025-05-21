@@ -218,9 +218,10 @@ class PerfilPublicoView(APIView):
 
 class UsuariosPublicosView(ListAPIView):
     queryset = Usuario.objects.filter(is_active=True)
-    serializer_class = UsuarioPublicoSerializer
-    permission_classes = [AllowAny]
-
+    serializer_class = UsuarioSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = 'id'
+    
 class ObraListView(generics.ListAPIView):
     serializer_class = ObraSerializer
 
@@ -324,3 +325,12 @@ def registrar_log(usuario, tabla, id_registro, accion, descripcion=None):
         accion=accion,
         descripcion=descripcion
     )
+
+# Obra Usuario Publico por ID
+class ObrasPorUsuarioView(ListAPIView):
+    serializer_class = ObraSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        usuario_id = self.kwargs.get('usuario_id')
+        return Obra.objects.filter(usuario_id=usuario_id)
