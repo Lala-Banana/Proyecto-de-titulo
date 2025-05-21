@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface UsuarioPublico {
   id: number;
@@ -21,7 +22,9 @@ export default function UsuariosAleatorios() {
         if (!res.ok) throw new Error('No se pudieron cargar los usuarios.');
 
         const todosUsuarios: UsuarioPublico[] = await res.json();
-        const seleccionados = todosUsuarios.sort(() => 0.5 - Math.random()).slice(0, 4);
+        const seleccionados = todosUsuarios
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 4);
         setUsuarios(seleccionados);
       } catch (err) {
         console.error('Error al cargar usuarios públicos:', err);
@@ -38,7 +41,11 @@ export default function UsuariosAleatorios() {
       <h2 className="text-2xl font-bold mb-6 text-center">Conoce a algunos artistas</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         {usuarios.map((user) => (
-          <div key={user.id} className="bg-white rounded-lg shadow p-4 text-center">
+          <Link
+            key={user.id}
+            href={`/usuarios/${user.id}`}
+            className="bg-white rounded-lg shadow p-4 text-center hover:shadow-lg transition"
+          >
             <Image
               src={user.foto_url || '/default-avatar.png'}
               alt={user.nombre}
@@ -51,7 +58,7 @@ export default function UsuariosAleatorios() {
             <p className="text-sm text-gray-600 mt-2 line-clamp-3">
               {user.descripcion || 'Sin descripción'}
             </p>
-          </div>
+          </Link>
         ))}
       </div>
     </section>
