@@ -116,6 +116,7 @@ class Obra(BaseModel):
     fecha_publicacion= models.DateTimeField(auto_now_add=True)
     usuario          = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     categoria        = models.ForeignKey(Categoria, null=True, on_delete=models.SET_NULL)
+    stock = models.PositiveIntegerField(default=1)
 
     # Fotos múltiples para cada obra
     fotos = GenericRelation(Photo)
