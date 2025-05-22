@@ -87,7 +87,7 @@ export default function PerfilUsuario({
   }; 
 
   return (
-    <div className="flex flex-col lg:flex-row h-auto lg:h-[90vh] max-w-screen-xl mx-auto bg-white/50 bg-white shadow-lg rounded-4xl">
+    <div className="flex flex-col lg:flex-row h-auto lg:h-[90vh] max-w-screen-xl mx-auto bg-white/50 shadow-lg rounded-4xl">
       {/* Perfil */}
       <div className="w-full lg:w-[320px] p-6 border-b lg:border-b-0 lg:border-r border-gray-200">
         <div className="flex flex-col items-center">

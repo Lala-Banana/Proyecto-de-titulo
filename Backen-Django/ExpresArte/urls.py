@@ -30,8 +30,7 @@ urlpatterns = [
     # Categorías
     path('categorias/', CategoriaListCreateView.as_view(), name='categorias-list-create'),
     path('categorias/<int:pk>/', CategoriaDetailView.as_view(), name='categorias-detail'),
-    path('categorias/<slug:slug>/', ObrasPorCategoriaView.as_view(), name='obras-por-categoria'),
-
+    path('categorias/<slug:slug>/obras/', ObrasPorCategoriaView.as_view(), name='obras-por-categoria'),
 
     path('perfil-publico/<int:usuario_id>/', PerfilPublicoView.as_view(), name='perfil-publico'),
     path('usuarios-publicos/', UsuariosPublicosView.as_view(), name='usuarios-publicos'),

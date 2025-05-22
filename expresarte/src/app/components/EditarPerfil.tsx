@@ -6,7 +6,12 @@ import { getSession } from 'next-auth/react';
 
 interface User {
   nombre: string;
+  email: string;
+  telefono: string;
+  rut: string;
   descripcion: string;
+  tipo_usuario: 'comprador' | 'artista' | '';
+  ubicacion: string;
   foto_url: string;
   fondo: string;
 }
@@ -25,10 +30,14 @@ const fondos = [
 export default function EditarPerfil() {
   const [user, setUser] = useState<User>({
     nombre: '',
+    email: '',
+    telefono: '',
+    rut: '',
     descripcion: '',
+    tipo_usuario: '',
+    ubicacion: '',
     foto_url: '',
     fondo: '',
-    
   });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -37,7 +46,6 @@ export default function EditarPerfil() {
     const cargarUsuario = async () => {
       let token = localStorage.getItem('access_token');
 
-      // Si no hay token en localStorage, intenta obtenerlo desde NextAuth
       if (!token) {
         const session = await getSession();
         if (session && (session as any).access_token) {
@@ -49,7 +57,6 @@ export default function EditarPerfil() {
       }
 
       if (!token) {
-        console.warn('❌ Token no disponible ni en localStorage ni en sesión. Redirigiendo...');
         alert('Debes iniciar sesión para editar tu perfil.');
         router.push('/login');
         return;
@@ -57,23 +64,23 @@ export default function EditarPerfil() {
 
       try {
         const res = await fetch('http://localhost:8000/api/me/', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` },
         });
-
-        if (!res.ok) throw new Error('Error al obtener usuario');
+        if (!res.ok) throw new Error();
 
         const data = await res.json();
-        console.log('👤 Usuario cargado:', data);
         setUser({
           nombre: data.nombre || '',
+          email: data.email || '',
+          telefono: data.telefono || '',
+          rut: data.rut || '',
           descripcion: data.descripcion || '',
+          tipo_usuario: data.tipo_usuario || '',
+          ubicacion: data.ubicacion || '',
           foto_url: data.foto_url || '',
-          fondo: data.fondo || ''
+          fondo: data.fondo || '',
         });
-      } catch (error) {
-        console.error('❌ Error al cargar usuario:', error);
+      } catch {
         alert('Error al obtener datos del perfil.');
       } finally {
         setLoading(false);
@@ -97,61 +104,144 @@ export default function EditarPerfil() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(user)
+        body: JSON.stringify(user),
       });
-
-      if (res.ok) {
-        console.log('✅ Perfil actualizado correctamente');
-        await new Promise((r) => setTimeout(r, 300));
-        router.push('/profile');
-      } else {
-        const data = await res.json();
-        console.error('❌ Error al guardar:', data);
-        alert('Error al guardar cambios: ' + (data.detail || JSON.stringify(data)));
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Error al guardar cambios');
       }
-    } catch (error) {
-      console.error('❌ Error de red:', error);
-      alert('Error de conexión con el servidor.');
+      router.push('/profile');
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 
   if (loading) return <p className="text-center py-8">Cargando perfil...</p>;
 
   return (
-    <div className="max-w-2xl mx-auto p-8">
+    <div className="max-w mx-auto p-8 bg-white ">
       <h1 className="text-2xl font-bold mb-6">Editar perfil</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
-          type="text"
-          placeholder="Nombre"
-          value={user.nombre}
-          onChange={(e) => setUser({ ...user, nombre: e.target.value })}
-          className="border border-gray-300 p-2 rounded"
-        />
-        <textarea
-          placeholder="Descripción"
-          value={user.descripcion}
-          onChange={(e) => setUser({ ...user, descripcion: e.target.value })}
-          className="border border-gray-300 p-2 rounded"
-        />
-
-        <input
-          type="text"
-          placeholder="URL de foto de perfil"
-          value={user.foto_url}
-          onChange={(e) => setUser({ ...user, foto_url: e.target.value })}
-          className="border border-gray-300 p-2 rounded"
-        />
-
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* FOTO DE PERFIL */}
         <div>
-          <p className="mb-2">Selecciona un fondo:</p>
+          <label className="block mb-2 text-black font-medium">Foto de perfil</label>
+          {user.foto_url && (
+            <img src={user.foto_url} alt="Avatar" className="w-32 h-32 rounded-full object-cover mb-2" />
+          )}
+          <input
+            type="text"
+            placeholder="URL de tu foto"
+            value={user.foto_url}
+            onChange={(e) => setUser({ ...user, foto_url: e.target.value })}
+            className="w-full border border-gray-300 p-2 rounded text-black placeholder-gray-500"
+          />
+        </div>
+
+        {/* DATOS BÁSICOS */}
+        <fieldset className="border-t pt-4 space-y-4">
+          <legend className="text-lg font-semibold">Datos de usuario</legend>
+
+          <div>
+            <label className="block mb-1 text-black">Nombre</label>
+            <input
+              type="text"
+              placeholder="Tu nombre"
+              value={user.nombre}
+              onChange={(e) => setUser({ ...user, nombre: e.target.value })}
+              className="w-full border border-gray-300 p-2 rounded text-black placeholder-gray-500"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 text-black">Email</label>
+            <input
+              type="email"
+              placeholder="correo@ejemplo.com"
+              value={user.email}
+              onChange={(e) => setUser({ ...user, email: e.target.value })}
+              className="w-full border border-gray-300 p-2 rounded text-black placeholder-gray-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1 text-black">Teléfono</label>
+              <input
+                type="tel"
+                placeholder="+56912345678"
+                value={user.telefono}
+                onChange={(e) => setUser({ ...user, telefono: e.target.value })}
+                className="w-full border border-gray-300 p-2 rounded text-black placeholder-gray-500"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 text-black">RUT</label>
+              <input
+                type="text"
+                placeholder="12.345.678-9"
+                value={user.rut}
+                onChange={(e) => setUser({ ...user, rut: e.target.value })}
+                className="w-full border border-gray-300 p-2 rounded text-black placeholder-gray-500"
+              />
+            </div>
+          </div>
+        </fieldset>
+
+        {/* DETALLE ADICIONAL */}
+        <fieldset className="border-t pt-4 space-y-4">
+          <legend className="text-lg font-semibold">Información adicional</legend>
+
+          <div>
+            <label className="block mb-1 text-black">Descripción</label>
+            <textarea
+              placeholder="Cuéntanos sobre ti..."
+              value={user.descripcion}
+              onChange={(e) => setUser({ ...user, descripcion: e.target.value })}
+              className="w-full border border-gray-300 p-2 rounded text-black placeholder-gray-500"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 text-black">Tipo de usuario</label>
+            <select
+              value={user.tipo_usuario}
+              onChange={(e) =>
+                setUser({ ...user, tipo_usuario: e.target.value as 'comprador' | 'artista' | '' })
+              }
+              className="w-full border border-gray-300 p-2 rounded text-black"
+            >
+              <option value="" disabled>
+                Selecciona...
+              </option>
+              <option value="comprador">Comprador</option>
+              <option value="artista">Artista</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-1 text-black">Ubicación</label>
+            <input
+              type="text"
+              placeholder="Ciudad, País"
+              value={user.ubicacion}
+              onChange={(e) => setUser({ ...user, ubicacion: e.target.value })}
+              className="w-full border border-gray-300 p-2 rounded text-black placeholder-gray-500"
+            />
+          </div>
+        </fieldset>
+
+        {/* SELECCIÓN DE FONDO */}
+        <div>
+          <p className="text-black mb-2 font-medium">Selecciona un fondo</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {fondos.map((url, idx) => (
               <div
                 key={idx}
-                className={`border-4 ${user.fondo === url ? 'border-blue-500' : 'border-transparent'} rounded overflow-hidden cursor-pointer`}
+                className={`border-4 ${
+                  user.fondo === url ? 'border-blue-500' : 'border-transparent'
+                } rounded overflow-hidden cursor-pointer`}
                 onClick={() => setUser({ ...user, fondo: url })}
               >
                 <img src={url} alt={`Fondo ${idx + 1}`} className="w-full h-24 object-cover" />
@@ -162,7 +252,7 @@ export default function EditarPerfil() {
 
         <button
           type="submit"
-          className="mt-4 bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
+          className="w-full bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
         >
           Guardar cambios
         </button>

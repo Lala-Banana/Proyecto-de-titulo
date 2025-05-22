@@ -52,22 +52,29 @@ class UsuarioActualView(APIView):
         return Response(UsuarioSerializer(request.user).data)
 
 # ✅ NUEVO: Editar perfil
-@api_view(['PUT'])
+@api_view(['PUT', 'PATCH'])
 @permission_classes([permissions.IsAuthenticated])
 def editar_perfil(request):
     user = request.user
     data = request.data
 
-    user.nombre = data.get('nombre', user.nombre)
-    user.descripcion = data.get('descripcion', user.descripcion)
-    user.foto_url = data.get('foto_url', user.foto_url)
-    user.fondo = data.get('fondo', getattr(user, 'fondo', ''))
+    # Campos editables
+    user.nombre       = data.get('nombre', user.nombre)
+    user.email        = data.get('email', user.email)
+    user.telefono     = data.get('telefono', user.telefono)
+    user.rut          = data.get('rut', user.rut)
+    user.descripcion  = data.get('descripcion', user.descripcion)
+    user.tipo_usuario = data.get('tipo_usuario', user.tipo_usuario)
+    user.ubicacion    = data.get('ubicacion', user.ubicacion)
+    user.foto_url     = data.get('foto_url', user.foto_url)
+    user.fondo        = data.get('fondo', user.fondo)
 
     user.save()
+
     return Response({
         "mensaje": "Perfil actualizado correctamente.",
         "usuario": UsuarioSerializer(user).data
-    })
+    }, status=status.HTTP_200_OK)
 
 # Google Auth
 @api_view(['POST'])
