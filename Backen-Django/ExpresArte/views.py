@@ -1,4 +1,6 @@
 # views.py (completo y corregido)
+from django.conf import settings
+import mercadopago
 from rest_framework import generics, permissions, status
 from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
@@ -8,11 +10,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Categoria, Obra, Compra, Favorito, Mensaje, Notificacion, Log, Usuario
 from .serializers import (
     CategoriaSerializer, ObraSerializer, CompraSerializer, FavoritoSerializer,
-    MensajeSerializer, NotificacionSerializer, LogSerializer,
+    MensajeSerializer, NotificacionSerializer, LogSerializer, PaymentSerializer,
     UsuarioSerializer, RegistroSerializer, LoginSerializer, GoogleLoginSerializer
 )
 from rest_framework.permissions import AllowAny, IsAdminUser  # Agregado IsAdminUser
 from .serializers import UsuarioPublicoSerializer
+from django.urls import reverse
 
 # Función auxiliar para obtener los tokens
 def get_tokens_for_user(user):
@@ -341,3 +344,86 @@ class ObrasPorUsuarioView(ListAPIView):
     def get_queryset(self):
         usuario_id = self.kwargs.get('usuario_id')
         return Obra.objects.filter(usuario_id=usuario_id)
+    
+# views.py (solo la parte de CreatePaymentView)
+
+from django.conf import settings
+import mercadopago
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import PaymentSerializer
+
+class CreatePaymentView(APIView):
+    def post(self, request):
+        # 1) Validación de entrada
+        serializer = PaymentSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        items = serializer.validated_data['items']
+        payer = serializer.validated_data['payer']
+
+        # 2) Inicializar SDK de Mercado Pago
+        sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+
+        # 3) Construir URLs absolutas para back_urls
+        success_url = request.build_absolute_uri('/api/pagos/success/')
+        failure_url = request.build_absolute_uri('/api/pagos/failure/')
+        pending_url = request.build_absolute_uri('/api/pagos/pending/')
+        # webhook_url = request.build_absolute_uri('/api/pagos/webhook/')
+
+        # 4) Montar preference_data (sin notification_url para sandbox)
+        preference_data = {
+            "items": items,
+            "payer": payer,
+            "back_urls": {
+                "success": success_url,
+                "failure": failure_url,
+                "pending": pending_url,
+            },
+            # Si quieres habilitar notificaciones, descomenta la siguiente línea:
+            # "notification_url": webhook_url,
+            # Y, si lo deseas, redirección automática tras aprobado:
+            # "auto_return": "approved",
+        }
+
+        # 5) Crear la preferencia
+        try:
+            mp_response = sdk.preference().create(preference_data)
+        except Exception as e:
+            return Response(
+                {"detail": "Error al crear la preferencia", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        # 6) Extraer la URL de checkout
+        raw = mp_response.get("response", {})
+        init_point = raw.get("sandbox_init_point") or raw.get("init_point")
+
+        # 7) Devolver al cliente
+        return Response(
+            {
+                "init_point": init_point,
+                "raw_response": raw
+            },
+            status=status.HTTP_201_CREATED
+        )
+
+class PaymentSuccessView(APIView):
+    def get(self, request):
+        return Response({"detail": "Pago aprobado"}, status=status.HTTP_200_OK)
+
+class PaymentFailureView(APIView):
+    def get(self, request):
+        return Response({"detail": "Pago rechazado"}, status=status.HTTP_200_OK)
+
+class PaymentPendingView(APIView):
+    def get(self, request):
+        return Response({"detail": "Pago pendiente"}, status=status.HTTP_200_OK)
+
+class MPWebhookView(APIView):
+    permission_classes = []  # pública
+    def post(self, request):
+        # aquí validas topic o type/id y actualizas tu orden
+        return Response(status=status.HTTP_200_OK)

@@ -120,3 +120,12 @@ class UsuarioPublicoSerializer(serializers.ModelSerializer):
             'telefono',
             'ubicacion',
         ]
+
+
+class PaymentSerializer(serializers.Serializer):
+    items = serializers.ListField(
+        child=serializers.DictField(
+            child=serializers.JSONField()
+        )
+    )
+    payer = serializers.DictField() 

@@ -1,7 +1,7 @@
 # urls.py (usando path personalizado para cada ViewSet)
 from django.urls import path
 from .views import (
-    CategoriaAdminDetailView, ObraAdminDetailView, ObraAdminListView, PerfilPublicoView, RegistroView, LoginView, UsuarioActualView, UsuarioAdminDetailView, UsuarioAdminListView, UsuariosPublicosView, guardar_usuario_google,
+    CategoriaAdminDetailView, CreatePaymentView, ObraAdminDetailView, ObraAdminListView, PerfilPublicoView, RegistroView, LoginView, UsuarioActualView, UsuarioAdminDetailView, UsuarioAdminListView, UsuariosPublicosView, guardar_usuario_google,
     CategoriaListCreateView, CategoriaDetailView,
     ObraListCreateView, ObraDetailView,
     CompraListCreateView, CompraDetailView,
@@ -12,8 +12,11 @@ from .views import (
     ObrasPorCategoriaView , # ← Correctamente agregado
     editar_perfil,
     CategoriaAdminListView,
-    ObrasPorUsuarioView
-
+    ObrasPorUsuarioView,
+    PaymentPendingView,
+    PaymentSuccessView,  # <-- Added import
+    PaymentFailureView,  # <-- Added import to fix the error
+    MPWebhookView,       # <-- Also add this if not already imported
 )
 
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -74,4 +77,12 @@ urlpatterns = [
 
      path('usuarios/<int:usuario_id>/obras/', ObrasPorUsuarioView.as_view(), name='obras-por-usuario'),
 
+    # Crear preferencia de pago
+    path('pagos/create/', CreatePaymentView.as_view(), name='create-payment'),
+    # URLs de retorno tras la compra
+    path('pagos/success/', PaymentSuccessView.as_view(),   name='payment-success'),
+    path('pagos/failure/', PaymentFailureView.as_view(),   name='payment-failure'),
+    path('pagos/pending/', PaymentPendingView.as_view(),   name='payment-pending'),
+    # Webhook de notificaciones de Mercado Pago
+    path('pagos/webhook/', MPWebhookView.as_view(),        name='mp-webhook'),
 ]
