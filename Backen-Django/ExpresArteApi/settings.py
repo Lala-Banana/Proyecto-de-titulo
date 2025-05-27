@@ -24,7 +24,12 @@ load_dotenv()
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-)(d0vv!q2q34#$3arn5gqq&uc57k$wbn&9hm+zd=4um2i4tm^j'
-MERCADOPAGO_ACCESS_TOKEN = os.getenv('MERCADOPAGO_ACCESS_TOKEN')
+# settings.py
+import environ
+env = environ.Env()
+environ.Env.read_env()   # lee .env en el root
+
+MERCADOPAGO_ACCESS_TOKEN = env("MP_ACCESS_TOKEN")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 

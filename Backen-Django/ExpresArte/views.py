@@ -353,27 +353,32 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import PaymentSerializer
-
+import logging
+# Configura el logger para este módulo
+logger = logging.getLogger(__name__)
 class CreatePaymentView(APIView):
     def post(self, request):
-        # 1) Validación de entrada
-        serializer = PaymentSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # … validaciones previas …
+        items = request.data.get("items")
+        payer = request.data.get("payer")
+        if not items or not payer:
+            return Response(
+                {"error": "Missing 'items' or 'payer' in request data."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        items = serializer.validated_data['items']
-        payer = serializer.validated_data['payer']
+        # Logueamos el token para verificar que sea de producción
+        logger.warning("Usando MP ACCESS TOKEN: %s", settings.MERCADOPAGO_ACCESS_TOKEN)
 
-        # 2) Inicializar SDK de Mercado Pago
+        # Inicializamos SDK con el token cargado en settings.py (.env)
         sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
 
-        # 3) Construir URLs absolutas para back_urls
-        success_url = request.build_absolute_uri('/api/pagos/success/')
-        failure_url = request.build_absolute_uri('/api/pagos/failure/')
-        pending_url = request.build_absolute_uri('/api/pagos/pending/')
-        # webhook_url = request.build_absolute_uri('/api/pagos/webhook/')
+        # Construimos las URLs de retorno
+        base = request.build_absolute_uri('/')
+        success_url = base + 'api/pagos/success/'
+        failure_url = base + 'api/pagos/failure/'
+        pending_url = base + 'api/pagos/pending/'
 
-        # 4) Montar preference_data (sin notification_url para sandbox)
         preference_data = {
             "items": items,
             "payer": payer,
@@ -382,31 +387,34 @@ class CreatePaymentView(APIView):
                 "failure": failure_url,
                 "pending": pending_url,
             },
-            # Si quieres habilitar notificaciones, descomenta la siguiente línea:
-            # "notification_url": webhook_url,
-            # Y, si lo deseas, redirección automática tras aprobado:
+            "binary_mode": True,
+            "payment_methods": {
+                "excluded_payment_types": [
+                    {"id": "ticket"},
+                    {"id": "atm"}
+                ],
+                "installments": 1
+            },
+            # si lo necesitas:
             # "auto_return": "approved",
+            # "notification_url": webhook_url,
         }
 
-        # 5) Crear la preferencia
-        try:
-            mp_response = sdk.preference().create(preference_data)
-        except Exception as e:
+        # Creamos la preferencia
+        mp_response = sdk.preference().create(preference_data)
+        raw = mp_response["response"]
+
+        # FORZAMOS siempre init_point (producción)
+        init_point = raw.get("init_point")
+        if not init_point:
+            # Si por alguna razón no llega, devolvemos un error claro
             return Response(
-                {"detail": "Error al crear la preferencia", "error": str(e)},
+                {"error": "No se obtuvo init_point de producción", "raw_response": raw},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        # 6) Extraer la URL de checkout
-        raw = mp_response.get("response", {})
-        init_point = raw.get("sandbox_init_point") or raw.get("init_point")
-
-        # 7) Devolver al cliente
         return Response(
-            {
-                "init_point": init_point,
-                "raw_response": raw
-            },
+            {"init_point": init_point, "raw_response": raw},
             status=status.HTTP_201_CREATED
         )
 
