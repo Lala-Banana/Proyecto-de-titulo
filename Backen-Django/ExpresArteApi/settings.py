@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-)(d0vv!q2q34#$3arn5gqq&uc57k$wbn&9hm+zd=4um2i4tm^j
 import environ
 env = environ.Env()
 environ.Env.read_env()   # lee .env en el root
-
+NGROK_URL = os.getenv("NGROK_URL", "")
 MERCADOPAGO_ACCESS_TOKEN = env("MP_ACCESS_TOKEN")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

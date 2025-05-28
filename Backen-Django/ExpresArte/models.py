@@ -107,45 +107,70 @@ class Categoria(BaseModel):
 
 
 class Obra(BaseModel):
-    titulo           = models.CharField(max_length=200)
-    descripcion      = models.TextField()
-    imagen_url       = models.URLField(blank=True, null=True)
-    precio           = models.DecimalField(max_digits=10, decimal_places=2)
-    en_venta         = models.BooleanField(default=True)
-    destacada        = models.BooleanField(default=False)
-    fecha_publicacion= models.DateTimeField(auto_now_add=True)
-    usuario          = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    categoria        = models.ForeignKey(Categoria, null=True, on_delete=models.SET_NULL)
-    stock = models.PositiveIntegerField(default=1)
-
-    # Fotos múltiples para cada obra
-    fotos = GenericRelation(Photo)
+    titulo             = models.CharField(max_length=200)
+    descripcion        = models.TextField()
+    imagen_url         = models.URLField(blank=True, null=True)
+    precio             = models.DecimalField(max_digits=10, decimal_places=2)
+    moneda             = models.CharField(max_length=3, default='CLP')  # <-- moneda
+    en_venta           = models.BooleanField(default=True)
+    destacada          = models.BooleanField(default=False)
+    fecha_publicacion  = models.DateTimeField(auto_now_add=True)
+    usuario            = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    categoria          = models.ForeignKey(Categoria, null=True, on_delete=models.SET_NULL)
+    stock              = models.PositiveIntegerField(default=1)
+    fotos              = GenericRelation(Photo)
 
     def __str__(self):
         return self.titulo
 
+    def descontar_stock(self, cantidad=1):
+        """
+        Resta `cantidad` al stock y guarda la instancia.
+        Lanza ValueError si no hay suficiente stock.
+        """
+        if cantidad > self.stock:
+            raise ValueError("Stock insuficiente para completar la compra")
+        self.stock -= cantidad
+        self.save(update_fields=['stock'])
+
 
 class Compra(BaseModel):
-    comprador = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='compras')
-    vendedor  = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='ventas')
-    obra      = models.ForeignKey(Obra, on_delete=models.CASCADE)
-    precio    = models.DecimalField(max_digits=10, decimal_places=2)
-    estado    = models.CharField(
-        max_length=20,
-        choices=[
-            ('pendiente','Pendiente'),
-            ('pagada','Pagada'),
-            ('entregada','Entregada'),
-            ('cancelada','Cancelada'),
-            ('reembolsada','Reembolsada'),
-        ],
-        default='pendiente'
-    )
-    fecha     = models.DateTimeField(auto_now_add=True)
+    ESTADOS = [
+        ('pendiente',   'Pendiente'),
+        ('pagada',      'Pagada'),
+        ('entregada',   'Entregada'),
+        ('cancelada',   'Cancelada'),
+        ('reembolsada', 'Reembolsada'),
+    ]
+
+    comprador        = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='compras')
+    vendedor         = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='ventas')
+    obra             = models.ForeignKey(Obra, on_delete=models.CASCADE)
+    cantidad         = models.PositiveIntegerField(default=1)  # <-- cuántas unidades
+    precio_unitario  = models.DecimalField(max_digits=10, decimal_places=2)  # <-- precio original por unidad
+    precio_total     = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True )  # <-- cantidad * precio_unitario
+    moneda           = models.CharField(max_length=3, default='CLP')  # <-- CLP
+    estado           = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
+    fecha            = models.DateTimeField(auto_now_add=True)
+
+    # Datos de Mercado Pago
+    preference_id    = models.CharField(max_length=100, blank=True, null=True)
+    collection_id    = models.CharField(max_length=100, blank=True, null=True)
+    transaction_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    payer_email      = models.EmailField(blank=True, null=True)
+    payment_method   = models.CharField(max_length=50, blank=True, null=True)
+    status_detail    = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
-        return f"Compra de {self.obra} por {self.comprador}"
+        return f"Compra #{self.id} de {self.obra} por {self.comprador}"
 
+    def save(self, *args, **kwargs):
+        # Al crear una nueva Compra pagada, descontar stock
+        creating = self._state.adding
+        super().save(*args, **kwargs)
+        if creating and self.estado == 'pagada':
+            # descontamos el stock una vez confirmada la compra
+            self.obra.descontar_stock(cantidad=self.cantidad)
 
 class Favorito(BaseModel):
     usuario      = models.ForeignKey(Usuario, on_delete=models.CASCADE)

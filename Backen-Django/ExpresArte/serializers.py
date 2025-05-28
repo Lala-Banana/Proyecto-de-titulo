@@ -80,7 +80,14 @@ class ObraSerializer(serializers.ModelSerializer):
 class CompraSerializer(serializers.ModelSerializer):
     class Meta:
         model = Compra
-        fields = '__all__'
+        fields = [
+            'id', 'obra', 'comprador', 'vendedor', 'cantidad',
+            'precio_unitario', 'precio_total', 'moneda', 'estado',
+            'preference_id', 'collection_id', 'transaction_amount',
+            'payer_email', 'payment_method', 'status_detail', 'fecha'
+        ]
+        read_only_fields = fields  # todo es de solo lectura en la respuesta
+
 
 class FavoritoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -123,9 +130,17 @@ class UsuarioPublicoSerializer(serializers.ModelSerializer):
 
 
 class PaymentSerializer(serializers.Serializer):
-    items = serializers.ListField(
-        child=serializers.DictField(
-            child=serializers.JSONField()
-        )
-    )
-    payer = serializers.DictField() 
+    permission_classes = [IsAuthenticated]
+    obra_id  = serializers.IntegerField()
+    cantidad = serializers.IntegerField(default=1, min_value=1)
+
+    def validate(self, data):
+        # Validar que la obra exista y que haya stock
+        try:
+            obra = Obra.objects.get(pk=data['obra_id'])
+        except Obra.DoesNotExist:
+            raise serializers.ValidationError("La obra no existe")
+
+        if not obra.en_venta or data['cantidad'] > obra.stock:
+            raise serializers.ValidationError("Stock insuficiente o no disponible")
+        return data

@@ -346,7 +346,7 @@ class ObrasPorUsuarioView(ListAPIView):
         return Obra.objects.filter(usuario_id=usuario_id)
     
 # views.py (solo la parte de CreatePaymentView)
-
+from django.shortcuts import get_object_or_404     
 from django.conf import settings
 import mercadopago
 from rest_framework.views import APIView
@@ -357,70 +357,127 @@ import logging
 # Configura el logger para este módulo
 logger = logging.getLogger(__name__)
 class CreatePaymentView(APIView):
+    # Para pruebas no exigimos autenticación ni creamos Compra
+    permission_classes = []  
+
     def post(self, request):
-        # … validaciones previas …
-        items = request.data.get("items")
-        payer = request.data.get("payer")
-        if not items or not payer:
+        # 1) Validar obra y cantidad igual que antes
+        serializer = PaymentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        obra_id  = serializer.validated_data['obra_id']
+        cantidad = serializer.validated_data['cantidad']
+        obra = get_object_or_404(Obra, pk=obra_id)
+        if not obra.en_venta or obra.stock < cantidad:
             return Response(
-                {"error": "Missing 'items' or 'payer' in request data."},
+                {"error": "Stock insuficiente o obra no disponible"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Logueamos el token para verificar que sea de producción
-        logger.warning("Usando MP ACCESS TOKEN: %s", settings.MERCADOPAGO_ACCESS_TOKEN)
-
-        # Inicializamos SDK con el token cargado en settings.py (.env)
+        # 2) Crear preferencia Mercado Pago
         sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+        items = [{
+            "id": str(obra.id),
+            "title": obra.titulo,
+            "description": obra.descripcion[:256],
+            "quantity": cantidad,
+            "currency_id": obra.moneda,
+            "unit_price": float(obra.precio),
+        }]
+        payer = {"email": request.user.email} if request.user.is_authenticated else {}
 
-        # Construimos las URLs de retorno
-        base = request.build_absolute_uri('/')
-        success_url = base + 'api/pagos/success/'
-        failure_url = base + 'api/pagos/failure/'
-        pending_url = base + 'api/pagos/pending/'
-
+        host = settings.NGROK_URL.rstrip('/')
         preference_data = {
             "items": items,
             "payer": payer,
             "back_urls": {
-                "success": success_url,
-                "failure": failure_url,
-                "pending": pending_url,
+                "success": f"{host}/api/pagos/success/",
+                "failure": f"{host}/api/pagos/failure/",
+                "pending": f"{host}/api/pagos/pending/",
             },
             "binary_mode": True,
             "payment_methods": {
-                "excluded_payment_types": [
-                    {"id": "ticket"},
-                    {"id": "atm"}
-                ],
+                "excluded_payment_types": [{"id": "ticket"}, {"id": "atm"}],
                 "installments": 1
             },
-            # si lo necesitas:
-            # "auto_return": "approved",
-            # "notification_url": webhook_url,
+            "auto_return": "approved",
         }
 
-        # Creamos la preferencia
-        mp_response = sdk.preference().create(preference_data)
-        raw = mp_response["response"]
+        try:
+            raw = sdk.preference().create(preference_data)["response"]
+        except Exception as e:
+            return Response(
+                {"error": "Error interno al crear preferencia MP", "detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-        # FORZAMOS siempre init_point (producción)
         init_point = raw.get("init_point")
         if not init_point:
-            # Si por alguna razón no llega, devolvemos un error claro
             return Response(
                 {"error": "No se obtuvo init_point de producción", "raw_response": raw},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+        # 3) ¡Nota! Aquí OMITIMOS la creación de Compra para no escribir en BD:
+        # compra = Compra.objects.create(…)
+        # serializer = CompraSerializer(compra)
+
+        # 4) Devolvemos solo el init_point y, opcionalmente, los datos de la preferencia
         return Response(
-            {"init_point": init_point, "raw_response": raw},
+            {
+                "init_point": init_point,
+                "preference": {
+                    "id": raw.get("id"),
+                    "items": raw.get("items"),
+                    "payer": raw.get("payer"),
+                }
+            },
             status=status.HTTP_201_CREATED
         )
 
+    
 class PaymentSuccessView(APIView):
+    permission_classes = []  # o IsAuthenticated si ya lo protegeste
+
     def get(self, request):
-        return Response({"detail": "Pago aprobado"}, status=status.HTTP_200_OK)
+        # 1. Extraer params de la query
+        pref_id          = request.query_params.get('preference_id')
+        payment_id       = request.query_params.get('payment_id')
+        collection_id    = request.query_params.get('collection_id')
+        merchant_order   = request.query_params.get('merchant_order_id')
+        status_param     = request.query_params.get('status') or request.query_params.get('collection_status')
+
+        if not payment_id or not pref_id:
+            return Response(
+                {"error": "Faltan parámetros de MP"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 2. Consultar a Mercado Pago para asegurarnos y obtener más datos
+        sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+        mp_payment = sdk.payment().get(payment_id)["response"]
+
+        # 3. Recuperar la Compra que creaste (por preference_id)
+        compra = get_object_or_404(Compra, preference_id=pref_id)
+
+        # 4. Actualizarla con los nuevos datos
+        compra.collection_id      = collection_id
+        compra.transaction_amount = mp_payment.get("transaction_amount")
+        compra.payer_email        = mp_payment.get("payer", {}).get("email")
+        compra.payment_method     = mp_payment.get("payment_method_id")
+        compra.status_detail      = mp_payment.get("status_detail")
+        compra.merchant_order_id  = merchant_order
+        compra.estado             = "pagada" if status_param == "approved" else status_param
+        compra.save()
+
+        # 5. Devolver un resumen
+        serializer = CompraSerializer(compra)
+        return Response(
+            {
+                "detail": "Pago aprobado y Compra actualizada",
+                "compra": serializer.data
+            },
+            status=status.HTTP_200_OK
+        )
 
 class PaymentFailureView(APIView):
     def get(self, request):
