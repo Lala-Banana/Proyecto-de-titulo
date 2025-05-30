@@ -19,7 +19,6 @@ class UsuarioSerializer(serializers.ModelSerializer):
             'fondo',
             'rut',
             'tipo_usuario',
-            'ubicacion',
             'is_active',
             'is_staff',
             'fecha_creacion',
@@ -76,6 +75,8 @@ class ObraSerializer(serializers.ModelSerializer):
     class Meta:
         model = Obra
         fields = '__all__'
+        read_only_fields = ('id',)
+
 
 class CompraSerializer(serializers.ModelSerializer):
     class Meta:
@@ -118,5 +119,4 @@ class UsuarioPublicoSerializer(serializers.ModelSerializer):
             'foto_url',
             'fondo',
             'telefono',
-            'ubicacion',
         ]

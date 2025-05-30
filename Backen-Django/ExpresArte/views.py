@@ -65,7 +65,6 @@ def editar_perfil(request):
     user.rut          = data.get('rut', user.rut)
     user.descripcion  = data.get('descripcion', user.descripcion)
     user.tipo_usuario = data.get('tipo_usuario', user.tipo_usuario)
-    user.ubicacion    = data.get('ubicacion', user.ubicacion)
     user.foto_url     = data.get('foto_url', user.foto_url)
     user.fondo        = data.get('fondo', user.fondo)
 

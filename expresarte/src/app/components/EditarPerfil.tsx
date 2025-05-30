@@ -11,7 +11,6 @@ interface User {
   rut: string;
   descripcion: string;
   tipo_usuario: 'comprador' | 'artista' | '';
-  ubicacion: string;
   foto_url: string;
   fondo: string;
 }
@@ -35,7 +34,6 @@ export default function EditarPerfil() {
     rut: '',
     descripcion: '',
     tipo_usuario: '',
-    ubicacion: '',
     foto_url: '',
     fondo: '',
   });
@@ -76,7 +74,6 @@ export default function EditarPerfil() {
           rut: data.rut || '',
           descripcion: data.descripcion || '',
           tipo_usuario: data.tipo_usuario || '',
-          ubicacion: data.ubicacion || '',
           foto_url: data.foto_url || '',
           fondo: data.fondo || '',
         });
@@ -218,17 +215,6 @@ export default function EditarPerfil() {
               <option value="comprador">Comprador</option>
               <option value="artista">Artista</option>
             </select>
-          </div>
-
-          <div>
-            <label className="block mb-1 text-black">Ubicación</label>
-            <input
-              type="text"
-              placeholder="Ciudad, País"
-              value={user.ubicacion}
-              onChange={(e) => setUser({ ...user, ubicacion: e.target.value })}
-              className="w-full border border-gray-300 p-2 rounded text-black placeholder-gray-500"
-            />
           </div>
         </fieldset>
 

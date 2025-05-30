@@ -51,7 +51,9 @@ class UsuarioManager(BaseUserManager):
 
 
 class Usuario(AbstractBaseUser, PermissionsMixin):
-    nombre         = models.CharField(max_length=100)
+    nombre       = models.CharField(max_length=100)
+    nombre_real        = models.CharField(max_length=100, null=True, blank=True, help_text="Nombre real del usuario")
+    apellidos       = models.CharField(max_length=100, null=True, blank=True, help_text="Apellidos del usuario")
     email          = models.EmailField(unique=True)
     telefono       = models.CharField(max_length=25, null=True, blank=True, help_text="Número en formato internacional, p.e. +56912345678")
     
@@ -64,7 +66,9 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         choices=[('comprador','Comprador'), ('artista','Artista')],
         null=True, blank=True
     )
-    ubicacion      = models.CharField(max_length=100, null=True, blank=True)
+    region        = models.CharField(max_length=50, null=True, blank=True, help_text="Región del usuario")
+    dirreccion      = models.CharField(max_length=100, null=True, blank=True, help_text="Dirección del usuario")
+    codigo_postal   = models.CharField(max_length=20, null=True, blank=True, help_text="Código postal del usuario")
     is_active      = models.BooleanField(default=True)
     is_staff       = models.BooleanField(default=False)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
