@@ -74,6 +74,11 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_modificacion = models.DateTimeField(auto_now=True)
     fondo          = models.URLField(null=True, blank=True, verbose_name='Fondo personalizado')
+    mp_collector_id = models.BigIntegerField(
+        null=True,
+        blank=True,
+        help_text="Collector ID de MercadoPago (sandbox o producción) para este usuario."
+    )
 
     # Fotos adicionales asociadas a este usuario
     fotos = GenericRelation(Photo)
@@ -121,7 +126,6 @@ class Obra(BaseModel):
     usuario          = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     categoria        = models.ForeignKey(Categoria, null=True, on_delete=models.SET_NULL)
     stock = models.PositiveIntegerField(default=1)
-
     # Fotos múltiples para cada obra
     fotos = GenericRelation(Photo)
 

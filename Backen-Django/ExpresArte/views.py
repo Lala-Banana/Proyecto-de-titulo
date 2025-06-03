@@ -1,4 +1,6 @@
 # views.py (completo y corregido)
+import os
+from mercadopago import SDK
 from rest_framework import generics, permissions, status
 from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
@@ -340,3 +342,107 @@ class ObrasPorUsuarioView(ListAPIView):
     def get_queryset(self):
         usuario_id = self.kwargs.get('usuario_id')
         return Obra.objects.filter(usuario_id=usuario_id)
+
+
+
+
+from django.contrib.auth import get_user_model
+
+Usuario = get_user_model()
+from .models import Obra  # Asegúrate de que tu modelo Obra esté aquí importado
+@api_view(['POST'])
+def crear_preferencia_pro(request):
+    """
+    Crear una preferencia de Checkout Pro en MERCADOPAGO (producción).
+
+    Recibe en request.data:
+      - obra_id : int  (PK de la Obra que se va a vender)
+
+    Flujo:
+      1) Valida que venga 'obra_id' en el JSON
+      2) Obtiene la instancia de Obra desde la DB
+      3) Toma: titulo y precio de la obra
+      4) Inicializa el SDK con el access_token de producción
+      5) Arma preference_data (sin collector_id, ya que cobra a tu cuenta)
+      6) Crea la preferencia y devuelve el init_point de producción
+    """
+
+    data = request.data
+    if "obra_id" not in data:
+        return Response(
+            {"error": "Debes enviar obra_id en el cuerpo de la petición"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        # 1) Obtener la obra desde la DB
+        obra_id = int(data["obra_id"])
+        obra = Obra.objects.get(pk=obra_id)
+
+        # 2) Extraer datos de la obra
+        titulo = obra.titulo
+        precio = float(obra.precio)
+
+        # 3) Inicializar el SDK de MercadoPago en PRODUCCIÓN
+        access_token_prod = os.getenv("MP_ACCESS_TOKEN")
+        if not access_token_prod:
+            return Response(
+                {"error": "No se encontró MP_ACCESS_TOKEN en configuración"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        mp = SDK(access_token_prod)
+
+        # 4) Armar el diccionario de preferencia
+        #    En producción cobramos directamente a la cuenta del access_token,
+        #    por lo que NO incluimos collector_id ni marketplace_fee.
+        preference_data = {
+            "items": [
+                {
+                    "title": titulo,
+                    "quantity": 1,
+                    "unit_price": precio
+                }
+            ],
+            "back_urls": {
+                # Reemplaza estas URLs por las rutas reales de tu frontend en producción
+                "success": "https://misitio.com/pago/exito",
+                "failure": "https://misitio.com/pago/fallo",
+                "pending": "https://misitio.com/pago/pendiente"
+            },
+            "auto_return": "approved",
+            # URL para recibir notificaciones en producción (webhook configurado)
+            "notification_url": "https://misitio.com/api/pagos/webhook/"
+        }
+
+        # 5) Crear la preferencia en MercadoPago (PRODUCCIÓN)
+        respuesta = mp.preference().create(preference_data)
+
+        # 6) Extraer el init_point (URL de checkout) para producción
+        init_point = None
+        if "response" in respuesta:
+            init_point = respuesta["response"].get("init_point")
+
+        if not init_point:
+            # Si no vino init_point, devolvemos el error completo de MP
+            return Response(
+                {
+                    "error": "No se generó init_point",
+                    "raw_mp_response": respuesta
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        # 7) Devolver al frontend la URL de producción para redirigir al usuario
+        return Response({"init_point": init_point})
+
+    except Obra.DoesNotExist:
+        return Response(
+            {"error": f"No existe ninguna Obra con id={obra_id}"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    except Exception as e:
+        return Response(
+            {"error": f"No se pudo crear la preferencia: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
