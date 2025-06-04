@@ -122,7 +122,7 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
       setEnVenta(true);
       setStock(1);
       onObraCreada();
-      //window.location.reload();
+      window.location.reload();
 
     } catch (err) {
       console.error('❌ Error al subir imagen o guardar obra:', err);

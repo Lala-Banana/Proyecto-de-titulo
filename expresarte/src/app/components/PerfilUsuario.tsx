@@ -22,7 +22,7 @@ interface User {
   descripcion: string;
   seguidores?: number;
   me_gusta?: number;
-  ubicacion?: string;
+  region?: string;
   fondo?: string;
   rut?: string;
   tipo_usuario?: 'comprador' | 'artista';
@@ -64,8 +64,7 @@ export default function PerfilUsuario({
         const data = await res.json();
         setUser({
           ...data,
-          region: data.ubicacion || data.region || 'No especificada',
-          rut: data.rut || 'No especificado',
+          region: data.region || 'No especificada',
           tipo_usuario: data.tipo_usuario || undefined,
         });
       } catch (err) {
@@ -84,35 +83,40 @@ export default function PerfilUsuario({
     setTimeout(() => {
       containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     }, 10);
-  }; 
+  };
 
   return (
-    <div className="flex flex-col lg:flex-row h-auto lg:h-[90vh] max-w-screen-xl mx-auto bg-white/50 shadow-lg rounded-4xl">
+    <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh)] w-full ">
       {/* Perfil */}
-      <div className="w-full lg:w-[320px] p-6 border-b lg:border-b-0 lg:border-r border-gray-200">
+      <div className="w-full lg:w-[320px] p-6 border-b lg:border-b-0 lg:border-r border-gray-200 lg:sticky lg:top-[80px] z-20">
+        {/*<div className="w-[320px] h-full p-6 border-b lg:border-b-0 lg:border-r border-gray-200 sticky top-[80px]"></div> */}
         <div className="flex flex-col items-center">
           <Image
             src={user.foto_url || '/default-avatar.png'}
             alt="Perfil"
-            width={150}
-            height={150}
-            className="border-4 border-black rounded-full shadow-md object-cover"
+            width={200}
+            height={200}
+            className="border-4 border-black  shadow-md object-cover"
           />
-          <h2 className="text-2xl font-bold mt-4 text-center text-black">{user.nombre}</h2>
-          <p className="text-sm text-gray-700 text-center">
+          <h2 className="text-2xl font-bold mt-4 text-center text-white">{user.nombre}</h2>
+          <p className="text-sm text-gray-100 text-center">
             Rol:{' '}
             <span className="font-semibold capitalize">
               {user.tipo_usuario === 'artista' ? 'Artista' :
                 user.tipo_usuario === 'comprador' ? 'Comprador' :
-                'No especificado'}
+                  'No especificado'}
             </span>
           </p>
-          <p className="text-sm text-gray-700 text-center">RUT: <span className="font-semibold">{user.rut}</span></p>
-          <p className="text-sm text-gray-700 text-center mb-2">Región: <span className="font-semibold">{user.ubicacion}</span></p>
-          <p className="text-sm text-gray-600 text-center mb-4">{user.descripcion || 'Sin descripción'}</p>
+          <p className="text-sm text-gray-100 text-center mb-2">Región: <span className="font-semibold">{user.region}</span></p>
+          <p
+            className="w-4/5 mx-auto text-sm text-gray-100 text-center mb-4 break-words"
+          >
+            {user.descripcion || 'Sin descripción'}
+          </p>
+
 
           {isOwner && (
-            <div className="flex flex-col gap-4 mb-6 w-full">
+            <div className="flex flex-col gap-4 mb-3 w-full">
               <button
                 onClick={() => {
                   router.push('/profile/editar');
@@ -120,25 +124,25 @@ export default function PerfilUsuario({
                 }}
                 className="bg-black text-white px-4 py-2 rounded hover:bg-rose-950 transition text-sm"
               >
-                Editar perfil
+                Editar Perfil
               </button>
               <button
                 onClick={() => setMostrarFormObra(true)}
                 className="bg-black text-white px-4 py-2 rounded hover:bg-rose-950 transition text-sm"
               >
-                Agregar obra
+                Agregar Publicacion
               </button>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4 w-full">
+          <div className="grid grid-cols-2 gap-3 w-full">
             {[
               { label: 'En venta', count: obrasEnVenta.length },
               { label: 'No en venta', count: obrasNoVenta.length },
               { label: 'Seguidores', count: user.seguidores ?? 0 },
               { label: 'Me gusta', count: user.me_gusta ?? 0 }
             ].map((item, i) => (
-              <div key={i} className="bg-gray-100 rounded-xl text-black shadow text-center py-3">
+              <div key={i} className=" w-full bg-gray-100 rounded-xl text-black shadow text-center">
                 <p className="text-xl font-bold">{item.count}</p>
                 <p className="text-sm text-gray-600">{item.label}</p>
               </div>
@@ -148,18 +152,17 @@ export default function PerfilUsuario({
       </div>
 
       {/* Obras */}
-      <div className="flex-1 overflow-hidden">
-        <div className=" bg-white/20 z-10 p-6 pb-2  border-black">
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="  z-10 p-6 pb-2  border-black">
           <div className=" mx-auto  bg-white/20 border-black rounded-md overflow-hidden">
             {['venta', 'noVenta'].map((tab) => (
               <button
                 key={tab}
-                className={`w-1/2 py-3  font-semibold text-sm ${
-                  activeTab === tab ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'
-                }`}
+                className={`w-1/2 py-3  font-semibold text-sm ${activeTab === tab ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'
+                  }`}
                 onClick={() => reiniciarScrollYCantidad(tab as 'venta' | 'noVenta')}
               >
-                {tab === 'venta' ? 'Obras en venta' : 'No en venta'}
+                {tab === 'venta' ? 'Publicaciones en venta' : 'No en venta'}
               </button>
             ))}
           </div>
@@ -175,8 +178,8 @@ export default function PerfilUsuario({
           ) : (
             <p className="text-center text-gray-600 text-lg mt-20">
               {activeTab === 'venta'
-                ? 'No hay obras en venta.'
-                : 'No hay obras fuera de venta.'}
+                ? 'No hay Publicaciones en venta.'
+                : 'No hay Publicaciones fuera de venta.'}
             </p>
           )}
         </div>

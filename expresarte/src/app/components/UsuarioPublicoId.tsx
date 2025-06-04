@@ -23,6 +23,7 @@ interface User {
   ubicacion?: string;
   fondo?: string;
   rut?: string;
+  region?: string;
   tipo_usuario?: 'comprador' | 'artista';
 }
 

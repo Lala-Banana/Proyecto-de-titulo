@@ -18,6 +18,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             'descripcion',
             'fondo',
             'rut',
+            'region',
             'tipo_usuario',
             'is_active',
             'is_staff',
@@ -119,4 +120,5 @@ class UsuarioPublicoSerializer(serializers.ModelSerializer):
             'foto_url',
             'fondo',
             'telefono',
+            'region',
         ]

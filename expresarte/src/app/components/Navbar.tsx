@@ -40,8 +40,14 @@ const Navbar = () => {
   if (loading) return null;
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-white shadow text-black' : 'bg-transparent text-white'}`}>
+    <nav
+      className={`
+        fixed top-0 left-0 w-full z-50 transition-all duration-500
+        ${scrolled ? 'bg-white shadow text-black' : 'bg-transparent text-white'}
+      `}
+    >
       <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        {/* Logo */}
         <Link href="/" className="flex items-center space-x-3">
           <Image
             src="https://plus.unsplash.com/premium_vector-1718634329496-83c7a9db4913?q=80&w=2650&auto=format&fit=crop"
@@ -52,13 +58,13 @@ const Navbar = () => {
           <span className="text-2xl font-bold">ExpresArte</span>
         </Link>
 
-        {/* enlaces y buscador */}
-        <div className="flex items-center gap-4">
+        {/* enlaces + buscador (solo en pantallas ≥ md) */}
+        <div className="hidden md:flex items-center gap-4">
           <Link href="/categorias" className="hover:underline text-sm">
             Categorías
           </Link>
           <Link href="/obras" className="hover:underline text-sm">
-            Obras
+            Publicac
           </Link>
           <form onSubmit={handleSearchSubmit}>
             <input
@@ -85,11 +91,13 @@ const Navbar = () => {
               />
 
               {dropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg text-black z-50">
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-md shadow-lg text-black z-50">
+                  {/* zona de info del usuario */}
                   <div className="p-4 border-b">
                     <p className="text-sm font-semibold">{user.nombre}</p>
                     <p className="text-xs text-gray-500">{user.email}</p>
                   </div>
+
                   <ul className="py-2">
                     <li>
                       <Link href="/profile" className="block px-4 py-2 hover:bg-gray-100 text-sm">
@@ -112,15 +120,43 @@ const Navbar = () => {
                       </button>
                     </li>
                   </ul>
+
+                  {/* separación */}
+                  <div className="border-t" />
+
+                  {/* enlaces + buscador solo en pantallas < md */}
+                  <div className="md:hidden px-4 py-3 flex flex-col gap-2">
+                    <Link href="/categorias" className="block px-2 py-1 hover:bg-gray-100 rounded text-sm">
+                      Categorías
+                    </Link>
+                    <Link href="/obras" className="block px-2 py-1 hover:bg-gray-100 rounded text-sm">
+                      Obras
+                    </Link>
+                    <form onSubmit={handleSearchSubmit} className="mt-2">
+                      <input
+                        type="text"
+                        placeholder="Buscar..."
+                        className="w-full px-2 py-1 rounded border text-sm text-black"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </form>
+                  </div>
                 </div>
               )}
             </>
           ) : (
             <>
-              <Link href="/login" className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+              <Link
+                href="/login"
+                className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+              >
                 Iniciar sesión
               </Link>
-              <Link href="/register" className="border border-blue-600 text-blue-600 px-3 py-1 rounded text-sm hover:bg-blue-50">
+              <Link
+                href="/register"
+                className="border border-blue-600 text-blue-600 px-3 py-1 rounded text-sm hover:bg-blue-50"
+              >
                 Crear cuenta
               </Link>
             </>
@@ -128,7 +164,6 @@ const Navbar = () => {
         </div>
       </div>
     </nav>
-    
   );
 };
 
