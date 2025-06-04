@@ -34,13 +34,14 @@ export default function PublicacionPage() {
   const pathname = usePathname();
   const [obra, setObra] = useState<Obra | null>(null);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
-  const [related, setRelated] = useState<Obra[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const obraId = pathname.split('/').pop();
 
-  // Fetch obra and usuario
+  // ——————————————
+  // 1) Fetch de la obra y el artista (localhost)
+  // ——————————————
   useEffect(() => {
     (async () => {
       if (!obraId) {
@@ -49,30 +50,19 @@ export default function PublicacionPage() {
         return;
       }
       try {
+        // Traer datos de la obra desde tu API local
         const res = await fetch(`http://localhost:8000/api/obras/${obraId}/`);
         if (!res.ok) throw new Error(await res.text());
         const obraData: Obra = await res.json();
         setObra(obraData);
 
-        // fetch usuario
+        // Traer perfil público del artista (localhost)
         const userRes = await fetch(
           `http://localhost:8000/api/perfil-publico/${obraData.usuario}/`
         );
         if (userRes.ok) {
           const usuarioData: Usuario = await userRes.json();
           setUsuario(usuarioData);
-        }
-
-        // fetch related by same category
-        const relRes = await fetch(
-          `http://localhost:8000/api/obras/?categoria=${obraData.categoria_slug}`
-        );
-        if (relRes.ok) {
-          let relList: Obra[] = await relRes.json();
-          relList = relList.filter(o => o.id !== obraData.id);
-          // shuffle
-          relList.sort(() => 0.5 - Math.random());
-          setRelated(relList.slice(0, 10));
         }
       } catch (err: any) {
         console.error(err);
@@ -83,10 +73,48 @@ export default function PublicacionPage() {
     })();
   }, [obraId]);
 
+
+  // ———————————————————————————————
+  // 2) Función para generar la preferencia (solo aquí usamos Ngrok)
+  // ———————————————————————————————
+  async function handleComprar() {
+    if (!obra) return;
+
+    // Verifica en consola que la variable exista
+    console.log('Ngrok URL:', process.env.NEXT_PUBLIC_NGROK_URL);
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_NGROK_URL}/api/pagos/crear-preferencia-prod/`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ obra_id: obra.id }),
+        }
+      );
+
+      if (!res.ok) {
+        const textoError = await res.text();
+        console.error('Error en crear_preferencia:', textoError);
+        return;
+      }
+
+      const { init_point } = await res.json();
+      if (init_point) {
+        window.open(init_point, '_blank');
+      } else {
+        console.error('No se recibió init_point:', init_point);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // ——————————————
+  // 3) Renderizado condicional
+  // ——————————————
   if (loading)
-    return (
-      <div className="flex items-center justify-center h-screen">Cargando…</div>
-    );
+    return <div className="flex items-center justify-center h-screen">Cargando…</div>;
   if (error)
     return (
       <div className="flex items-center justify-center h-screen text-red-600">
@@ -100,64 +128,52 @@ export default function PublicacionPage() {
       </div>
     );
 
+  // ——————————————
+  // 4) UI de la página
+  // ——————————————
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <NavbarCombined />
 
       <main className="flex-grow container mx-auto px-4 py-8">
-        <br />
-        <br />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Galería principal con full-HD scaled */}
+          {/* Galería principal */}
           <section className="lg:col-span-2 space-y-6">
             <div className="rounded-xl overflow-hidden shadow-lg bg-white">
               {obra.imagen_url ? (
-              <Image
-                src={obra.imagen_url}
-                alt={obra.titulo}
-                width={500}
-                height={300}
-                unoptimized
-                className="object-cover"
-              />
-
-            ) : (
-              <div className="w-full h-64 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-                Sin imagen disponible
-              </div>
-            )}
-
-            </div>
-            <div className="flex space-x-20 overflow-x-auto">
-              {Array(5)
-                .fill(obra.imagen_url)
-                .map((src, i) => (
-                  <div
-                    key={i}
-                    className="flex-shrink-0 w-28 h-28 rounded-lg overflow-hidden shadow-sm bg-white"
-                  >
-                    <Image
-                      src={src}
-                      alt={`${obra.titulo} mini ${i}`}
-                      width={112}
-                      height={212}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
+                <Image
+                  src={obra.imagen_url}
+                  alt={obra.titulo}
+                  width={500}
+                  height={300}
+                  unoptimized
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-64 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
+                  Sin imagen disponible
+                </div>
+              )}
             </div>
           </section>
 
-          {/* Sidebar info sobre obra y artista */}
+          {/* Sidebar con info y botón “Comprar” */}
           <aside className="space-y-2">
             <div className="bg-white p-3 rounded-xl shadow-lg space-y-4">
               <h1 className="text-2xl font-bold">{obra.titulo}</h1>
               <p className="text-gray-700">{obra.descripcion}</p>
               {obra.en_venta ? (
-                <p className="text-3xl font-semibold text-green-600">
-                  ${obra.precio}
-                </p>
+                <>
+                  <p className="text-3xl font-semibold text-green-600">
+                    ${obra.precio}
+                  </p>
+                  <button
+                    onClick={handleComprar}
+                    className="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+                  >
+                    Comprar ahora
+                  </button>
+                </>
               ) : (
                 <span className="inline-block px-3 py-1 bg-gray-200 rounded-full text-gray-600">
                   No en venta
@@ -195,24 +211,6 @@ export default function PublicacionPage() {
                   </li>
                 </ul>
                 <p className="mt-4 text-gray-600">{usuario.descripcion}</p>
-                <div className="mt-6 space-y-2">
-                  <a
-                    href={`mailto:${usuario.email}`}
-                    className="block w-full text-center bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-                  >
-                    Enviar correo
-                  </a>
-                  {usuario.telefono && (
-                    <a
-                      href={`https://api.whatsapp.com/send?phone=${usuario.telefono}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block w-full text-center bg-green-500 text-white py-2 rounded hover:bg-green-600"
-                    >
-                      WhatsApp
-                    </a>
-                  )}
-                </div>
               </div>
             )}
 
@@ -224,29 +222,6 @@ export default function PublicacionPage() {
             </button>
           </aside>
         </div>
-
-        {/* Sección de obras relacionadas */}
-        {related.length > 0 && (
-          <section className="mt-5">
-            <h3 className="text-xl font-semibold mb-2">Obras en la misma categoría</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-10">
-              {related.map(o => (
-                <Link key={o.id} href={`/publicacion/${o.id}`}>
-                  <div className="bg-white text-black border-b-black rounded-lg overflow-hidden shadow hover:shadow-md transition">
-                    <Image
-                      src={o.imagen_url}
-                      alt={o.titulo}
-                      width={300}
-                      height={300}
-                      className="w-full h-24 object-cover"
-                    />
-                    <p className="text-sm p-2 truncate">{o.titulo}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
       </main>
 
       <Footer />
