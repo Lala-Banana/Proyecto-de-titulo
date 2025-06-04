@@ -56,10 +56,14 @@ export default function ObrasPage() {
   return (
     <>
       <NavbarCombined />
-      <main className="flex pt-24 pb-16 min-h-screen bg-white">
-        <SidebarFiltros onAplicar={aplicarFiltro} />
+      <main className="flex flex-col lg:flex-row pt-24 pb-16 min-h-screen bg-white">
+        {/* Sidebar que queda arriba en móvil y a la izquierda en pantallas ≥ lg */}
+        <div className="w-full lg:w-64 px-4">
+          <SidebarFiltros onAplicar={aplicarFiltro} />
+        </div>
 
-        <section className="flex-1 px-4">
+        {/* Contenido de obras: ocupa todo el ancho en móvil, y el resto en pantallas ≥ lg */}
+        <section className="flex-1 px-4 mt-6 lg:mt-0">
           <h1 className="text-4xl font-serif italic font-bold tracking-wider text-center text-black mb-10">
             PUBLICACIONES DISPONIBLES
           </h1>

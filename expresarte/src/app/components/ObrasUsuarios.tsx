@@ -72,7 +72,7 @@ export default function ObrasUsuario({ slugCategoria, usuarioId, token }: Props)
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">Tus Obras Publicadas</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ">
         {obras.map((obra) => (
           <div
             key={obra.id}
@@ -82,7 +82,7 @@ export default function ObrasUsuario({ slugCategoria, usuarioId, token }: Props)
             <img
               src={obra.imagen_url}
               alt={obra.titulo}
-              className="w-full h-48 object-cover rounded-xl mb-3"
+              className="w-full h-100 object-cover rounded-xl mb-3"
             />
             <h3 className="text-lg font-semibold truncate">{obra.titulo}</h3>
             <p className="text-sm text-gray-600 line-clamp-3">{obra.descripcion}</p>

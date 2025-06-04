@@ -104,6 +104,7 @@ export default function PerfilUsuario({
             <span className="font-semibold capitalize">
               {user.tipo_usuario === 'artista' ? 'Artista' :
                 user.tipo_usuario === 'comprador' ? 'Comprador' :
+                user.tipo_usuario === 'distribuidor' ? 'Distribuidor' :
                   'No especificado'}
             </span>
           </p>

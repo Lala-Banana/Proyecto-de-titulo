@@ -52,8 +52,7 @@ export default function ObrasGrid({ obras, slug, columnas = 4 }: Props) {
             src={obra.imagen_url}
             alt={obra.titulo}
             fill
-            sizes="200px"
-            quality={200}
+            
             className="object-cover"
             unoptimized
           />

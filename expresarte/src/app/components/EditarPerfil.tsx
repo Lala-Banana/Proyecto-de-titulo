@@ -10,7 +10,7 @@ interface User {
   telefono: string;
   rut: string;
   descripcion: string;
-  tipo_usuario: 'comprador' | 'artista' | '';
+  tipo_usuario: 'comprador' | 'artista' | 'Distribuidor' | '';
   foto_url: string;
   fondo: string;
 }
@@ -205,7 +205,7 @@ export default function EditarPerfil() {
             <select
               value={user.tipo_usuario}
               onChange={(e) =>
-                setUser({ ...user, tipo_usuario: e.target.value as 'comprador' | 'artista' | '' })
+                setUser({ ...user, tipo_usuario: e.target.value as 'comprador' | 'artista' | 'Distribuidor' |'' })
               }
               className="w-full border border-gray-300 p-2 rounded text-black"
             >
@@ -214,6 +214,8 @@ export default function EditarPerfil() {
               </option>
               <option value="comprador">Comprador</option>
               <option value="artista">Artista</option>
+              <option value="distribuidor">Distribuiodor</option>
+
             </select>
           </div>
         </fieldset>

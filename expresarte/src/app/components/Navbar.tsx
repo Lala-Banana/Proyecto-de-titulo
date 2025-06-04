@@ -14,12 +14,14 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
+  // Cambia el fondo del navbar cuando se hace scroll
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 80);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Cierra el dropdown si se hace clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -30,10 +32,12 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Envía la búsqueda al hacer submit
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/buscar?query=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
     }
   };
 
@@ -65,6 +69,9 @@ const Navbar = () => {
           </Link>
           <Link href="/obras" className="hover:underline text-sm">
             Publicac
+          </Link>
+          <Link href="/usuarios" className="hover:underline text-sm">
+            Usuarios
           </Link>
           <form onSubmit={handleSearchSubmit}>
             <input
@@ -100,20 +107,31 @@ const Navbar = () => {
 
                   <ul className="py-2">
                     <li>
-                      <Link href="/profile" className="block px-4 py-2 hover:bg-gray-100 text-sm">
+                      <Link
+                        href="/profile"
+                        onClick={() => setDropdownOpen(false)}
+                        className="block px-4 py-2 hover:bg-gray-100 text-sm"
+                      >
                         Perfil
                       </Link>
                     </li>
                     {user.is_staff && (
                       <li>
-                        <Link href="/admin/obras" className="block px-4 py-2 hover:bg-gray-100 text-sm">
+                        <Link
+                          href="/admin/obras"
+                          onClick={() => setDropdownOpen(false)}
+                          className="block px-4 py-2 hover:bg-gray-100 text-sm"
+                        >
                           Admin
                         </Link>
                       </li>
                     )}
                     <li>
                       <button
-                        onClick={logout}
+                        onClick={() => {
+                          logout();
+                          setDropdownOpen(false);
+                        }}
                         className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                       >
                         Cerrar sesión
@@ -126,13 +144,34 @@ const Navbar = () => {
 
                   {/* enlaces + buscador solo en pantallas < md */}
                   <div className="md:hidden px-4 py-3 flex flex-col gap-2">
-                    <Link href="/categorias" className="block px-2 py-1 hover:bg-gray-100 rounded text-sm">
+                    <Link
+                      href="/categorias"
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-2 py-1 hover:bg-gray-100 rounded text-sm"
+                    >
                       Categorías
                     </Link>
-                    <Link href="/obras" className="block px-2 py-1 hover:bg-gray-100 rounded text-sm">
-                      Obras
+                    <Link
+                      href="/obras"
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-2 py-1 hover:bg-gray-100 rounded text-sm"
+                    >
+                      Publicac
                     </Link>
-                    <form onSubmit={handleSearchSubmit} className="mt-2">
+                    <Link
+                      href="/usuarios"
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-2 py-1 hover:bg-gray-100 rounded text-sm"
+                    >
+                      Usuarios
+                    </Link>
+                    <form
+                      onSubmit={(e) => {
+                        setDropdownOpen(false);
+                        handleSearchSubmit(e);
+                      }}
+                      className="mt-2"
+                    >
                       <input
                         type="text"
                         placeholder="Buscar..."

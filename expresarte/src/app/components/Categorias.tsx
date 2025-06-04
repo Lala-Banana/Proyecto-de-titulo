@@ -11,15 +11,15 @@ type Category = {
 };
 
 interface Props {
-  columnas?: number;        // Número de columnas (ej: 3, 4, 5)
-  limite?: number;          // Máximo de categorías a mostrar
-  titulo?: string;          // Título personalizado
+  columnas?: number; // Número de columnas (ej: 3, 4, 5)
+  limite?: number;   // Máximo de categorías a mostrar
+  titulo?: string;   // Título personalizado
 }
 
 const CategoriasGrid: React.FC<Props> = ({
   columnas = 4,
-  limite,                         // <-- aquí recibimos el límite
-  titulo = 'CATEGORÍAS DISPONIBLES'
+  limite,
+  titulo = 'CATEGORÍAS DISPONIBLES',
 }) => {
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const router = useRouter();
@@ -47,7 +47,7 @@ const CategoriasGrid: React.FC<Props> = ({
     ? allCategories.slice(0, limite)
     : allCategories;
 
-  // Genero las clases de columnas (puedes safelist en tailwind.config.js si usas purge)
+  // Genero las clases de columnas
   const colsMap: Record<number, string> = {
     1: 'md:grid-cols-1',
     2: 'md:grid-cols-2',
@@ -62,7 +62,7 @@ const CategoriasGrid: React.FC<Props> = ({
       <h1 className="text-4xl font-serif italic font-bold tracking-wider text-black mb-6">
         {titulo}
       </h1>
-      <div className={`grid ${columnasClase} gap-6 w-full`}>
+      <div className={`grid ${columnasClase} gap-6 w-full transform scale-[0.8]`}>
         {categoriasMostradas.map((cat) => (
           <div
             key={cat.id}

@@ -52,18 +52,22 @@ export default function UsuariosPublicos() {
           <div
             key={u.id}
             onClick={() => router.push(`/usuarios/${u.id}`)}
-            className="cursor-pointer bg-white rounded-lg shadow p-4 flex flex-col items-center text-center hover:shadow-lg transition"
+            className="cursor-pointer bg-white rounded-lg shadow p-4 sm:p-6 flex flex-col items-center text-center hover:shadow-lg transition overflow-hidden"
           >
-            <Image
-              src={u.foto_url || '/default-avatar.png'}
-              alt={u.nombre}
-              width={80}
-              height={80}
-              className="rounded-full object-cover mb-4"
-            />
-            <h3 className="font-semibold text-lg mb-2 truncate">{u.nombre}</h3>
-            <p className="text-sm text-gray-600 mb-1 truncate">{u.email}</p>
-            {u.ubicacion && <p className="text-sm text-gray-500">{u.ubicacion}</p>}
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mb-4 flex-shrink-0">
+              <Image
+                src={u.foto_url || '/default-avatar.png'}
+                alt={u.nombre}
+                width={80}
+                height={80}
+                className="rounded-full object-cover"
+              />
+            </div>
+            <h3 className="font-semibold text-base sm:text-lg mb-1 w-full truncate">{u.nombre}</h3>
+            <p className="text-xs sm:text-sm text-gray-600 mb-1 w-full truncate">{u.email}</p>
+            {u.ubicacion && (
+              <p className="text-xs sm:text-sm text-gray-500 w-full truncate">{u.ubicacion}</p>
+            )}
           </div>
         ))}
       </div>
