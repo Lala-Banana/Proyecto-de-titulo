@@ -167,20 +167,34 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
         ))}
       </select>
 
-      {/* Imagen */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Imagen de la obra</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            if (e.target.files && e.target.files[0]) {
-              setImagenArchivo(e.target.files[0]);
-            }
-          }}
-          required
-        />
-      </div>
+     {/* Imagen */}
+<div>
+  <label className="block text-sm font-medium text-black mb-1">Imagen</label>
+
+  <div className="flex items-center space-x-4">
+    {/* Botón para elegir archivo */}
+    <label className="bg-black text-white px-4 py-2 rounded cursor-pointer hover:bg-gray-800 transition">
+      Elegir archivo
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0]) {
+            setImagenArchivo(e.target.files[0]);
+          }
+        }}
+        required
+      />
+    </label>
+
+    {/* Nombre del archivo seleccionado */}
+    <span className="text-black text-sm">
+      {imagenArchivo ? imagenArchivo.name : 'Ningún archivo seleccionado'}
+    </span>
+  </div>
+</div>
+
 
       {/* Opciones de venta */}
       <div className="mt-4 space-y-2">
