@@ -29,6 +29,7 @@ interface Obra {
   destacada: boolean;
   categoria: number;
   usuario: number;
+  stock: number;
 }
 
 export default function PublicacionPage() {
