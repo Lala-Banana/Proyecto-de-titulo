@@ -12,7 +12,9 @@ from .views import (
     ObrasPorCategoriaView , # ← Correctamente agregado
     editar_perfil,
     CategoriaAdminListView,
-    ObrasPorUsuarioView
+    ObrasPorUsuarioView,
+    ObraContentTypeView,
+    PhotoListCreateView
 
 )
 
@@ -75,4 +77,7 @@ urlpatterns = [
     path('usuarios/<int:usuario_id>/obras/', ObrasPorUsuarioView.as_view(), name='obras-por-usuario'),
     path("pagos/crear-preferencia-prod/", crear_preferencia_pro, name="crear-preferencia-prod"),
 
+    #Fotos por publicacion
+    path('obra-content-type/', ObraContentTypeView.as_view(), name='obra-content-type'),
+    path('photos/', PhotoListCreateView.as_view(), name='photo-list-create'),
 ]

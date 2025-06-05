@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .models import Usuario, Categoria, Obra, Compra, Favorito, Mensaje, Notificacion, Log
+from .models import Usuario, Categoria, Obra, Compra, Favorito, Mensaje, Notificacion, Log, Photo
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
@@ -122,3 +122,8 @@ class UsuarioPublicoSerializer(serializers.ModelSerializer):
             'telefono',
             'region',
         ]
+
+class PhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Photo
+        fields = ['id', 'content_type', 'object_id', 'url', 'uploaded_at']

@@ -7,14 +7,16 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Categoria, Obra, Compra, Favorito, Mensaje, Notificacion, Log, Usuario
+from .models import Categoria, Obra, Compra, Favorito, Mensaje, Notificacion, Log, Usuario, Photo
 from .serializers import (
     CategoriaSerializer, ObraSerializer, CompraSerializer, FavoritoSerializer,
     MensajeSerializer, NotificacionSerializer, LogSerializer,
-    UsuarioSerializer, RegistroSerializer, LoginSerializer, GoogleLoginSerializer
+    UsuarioSerializer, RegistroSerializer, LoginSerializer, GoogleLoginSerializer, PhotoSerializer
 )
 from rest_framework.permissions import AllowAny, IsAdminUser  # Agregado IsAdminUser
 from .serializers import UsuarioPublicoSerializer
+from django.contrib.contenttypes.models import ContentType
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 # Función auxiliar para obtener los tokens
 def get_tokens_for_user(user):
@@ -446,3 +448,28 @@ def crear_preferencia_pro(request):
             {"error": f"No se pudo crear la preferencia: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+class ObraContentTypeView(APIView):
+    def get(self, request):
+        ct = ContentType.objects.get_for_model(Obra)
+        return Response({
+            'content_type_id': ct.id,
+            'model': ct.model,
+            'app_label': ct.app_label
+        })
+
+
+class PhotoListCreateView(generics.ListCreateAPIView):
+    queryset = Photo.objects.all()
+    serializer_class = PhotoSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        object_id = self.request.query_params.get('object_id')
+        content_type = self.request.query_params.get('content_type')
+
+        if object_id and content_type:
+            queryset = queryset.filter(object_id=object_id, content_type_id=content_type)
+
+        return queryset

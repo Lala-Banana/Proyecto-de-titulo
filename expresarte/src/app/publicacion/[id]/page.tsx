@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import NavbarCombined from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
+import MostrarObra from '@/app/components/MostrarObra'; // ✅ IMPORTADO
 
 interface Usuario {
   id: number;
@@ -25,8 +26,9 @@ interface Obra {
   imagen_url: string;
   precio: number;
   en_venta: boolean;
+  destacada: boolean;
+  categoria: number;
   usuario: number;
-  categoria_slug: string;
 }
 
 export default function PublicacionPage() {
@@ -41,7 +43,7 @@ export default function PublicacionPage() {
   const obraId = pathname.split('/').pop();
 
   // ——————————————
-  // 1) Fetch de la obra y el artista (localhost)
+  // 1) Fetch de la obra y el artista
   // ——————————————
   useEffect(() => {
     (async () => {
@@ -72,7 +74,6 @@ export default function PublicacionPage() {
         if (allRes.ok) {
           const todas: Obra[] = await allRes.json();
           const filtradas = todas.filter((o) => o.id !== obraData.id);
-          // Mezclar aleatoriamente y tomar las primeras 4
           const shuffled = filtradas.sort(() => Math.random() - 0.5);
           setOtherObras(shuffled.slice(0, 4));
         }
@@ -156,24 +157,9 @@ export default function PublicacionPage() {
 
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Galería principal */}
+          {/* ✅ Galería principal usando MostrarObra */}
           <section className="lg:col-span-2 space-y-6">
-            <div className="rounded-xl overflow-hidden shadow-lg bg-white">
-              {obra.imagen_url ? (
-                <Image
-                  src={obra.imagen_url}
-                  alt={obra.titulo}
-                  width={800}
-                  height={500}
-                  unoptimized
-                  className="object-cover w-full h-auto"
-                />
-              ) : (
-                <div className="w-full h-64 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-                  Sin imagen disponible
-                </div>
-              )}
-            </div>
+            <MostrarObra obra={obra} />
           </section>
 
           {/* Sidebar con info y botón “Comprar” */}

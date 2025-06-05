@@ -35,7 +35,7 @@ interface Props {
   obrasNoVenta: Obra[];
   activeTab: 'venta' | 'noVenta';
   setActiveTab: (tab: 'venta' | 'noVenta') => void;
-  isOwner?: boolean; // ✅ NUEVA PROP
+  isOwner?: boolean;
 }
 
 export default function PerfilUsuario({
@@ -79,24 +79,23 @@ export default function PerfilUsuario({
 
   const reiniciarScrollYCantidad = (nuevoTab: 'venta' | 'noVenta') => {
     setActiveTab(nuevoTab);
-    setCantidadVisible(9);
+    setCantidadVisible(allObras.length);
     setTimeout(() => {
       containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     }, 10);
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh)] w-full ">
+    <div className="flex flex-col lg:flex-row h-screen w-full overflow-hidden">
       {/* Perfil */}
-      <div className="w-full lg:w-[320px] p-6 border-b lg:border-b-0 lg:border-r border-gray-200 lg:sticky lg:top-[80px] z-20">
-        {/*<div className="w-[320px] h-full p-6 border-b lg:border-b-0 lg:border-r border-gray-200 sticky top-[80px]"></div> */}
+      <div className="w-full lg:w-[320px] p-6 border-b lg:border-b-0 lg:sticky lg:top-[80px] z-20 bg-white/20 backdrop-blur-sm">
         <div className="flex flex-col items-center">
           <Image
             src={user.foto_url || '/default-avatar.png'}
             alt="Perfil"
             width={200}
             height={200}
-            className="border-4 border-black  shadow-md object-cover"
+            className="border-4 border-black shadow-md object-cover"
           />
           <h2 className="text-2xl font-bold mt-4 text-center text-white">{user.nombre}</h2>
           <p className="text-sm text-gray-100 text-center">
@@ -109,12 +108,9 @@ export default function PerfilUsuario({
             </span>
           </p>
           <p className="text-sm text-gray-100 text-center mb-2">Región: <span className="font-semibold">{user.region}</span></p>
-          <p
-            className="w-4/5 mx-auto text-sm text-gray-100 text-center mb-4 break-words"
-          >
+          <p className="w-4/5 mx-auto text-sm text-gray-100 text-center mb-4 break-words">
             {user.descripcion || 'Sin descripción'}
           </p>
-
 
           {isOwner && (
             <div className="flex flex-col gap-4 mb-3 w-full">
@@ -143,7 +139,7 @@ export default function PerfilUsuario({
               { label: 'Seguidores', count: user.seguidores ?? 0 },
               { label: 'Me gusta', count: user.me_gusta ?? 0 }
             ].map((item, i) => (
-              <div key={i} className=" w-full bg-gray-100 rounded-xl text-black shadow text-center">
+              <div key={i} className="w-full bg-gray-100 rounded-xl text-black shadow text-center">
                 <p className="text-xl font-bold">{item.count}</p>
                 <p className="text-sm text-gray-600">{item.label}</p>
               </div>
@@ -153,14 +149,13 @@ export default function PerfilUsuario({
       </div>
 
       {/* Obras */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="  z-10 p-6 pb-2  border-black">
-          <div className=" mx-auto  bg-white/20 border-black rounded-md overflow-hidden">
+      <div className="flex-1 p-6 overflow-y-auto" ref={containerRef}>
+        <div className="z-10 p-6 pb-2 border-black">
+          <div className="mx-auto bg-white/20 border-black rounded-md overflow-hidden">
             {['venta', 'noVenta'].map((tab) => (
               <button
                 key={tab}
-                className={`w-1/2 py-3  font-semibold text-sm ${activeTab === tab ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'
-                  }`}
+                className={`w-1/2 py-3 font-semibold text-sm ${activeTab === tab ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'}`}
                 onClick={() => reiniciarScrollYCantidad(tab as 'venta' | 'noVenta')}
               >
                 {tab === 'venta' ? 'Publicaciones en venta' : 'No en venta'}
@@ -169,11 +164,7 @@ export default function PerfilUsuario({
           </div>
         </div>
 
-        <div
-          ref={containerRef}
-          className="overflow-y-auto px-6 pb-6 animate-fade-in"
-          style={{ maxHeight: 'calc(100vh - 120px)' }}
-        >
+        <div className="px-6 pb-6 animate-fade-in">
           {obrasMostradas.length > 0 ? (
             <ObrasGrid obras={obrasMostradas} slug={user.nombre.toLowerCase().replace(/\s+/g, '-')} />
           ) : (

@@ -19,10 +19,11 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
   const [categoriaId, setCategoriaId] = useState<number | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [contentTypeObra, setContentTypeObra] = useState<number | null>(null);
 
   const [enVenta, setEnVenta] = useState(true);
   const [stock, setStock] = useState(1);
-  const [imagenArchivo, setImagenArchivo] = useState<File | null>(null);
+  const [imagenes, setImagenes] = useState<File[]>([]);
 
   useEffect(() => {
     const fetchCategorias = async () => {
@@ -41,52 +42,71 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
       }
     };
 
+    const fetchContentTypeObra = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/obra-content-type/');
+        const data = await res.json();
+        console.log('✅ ContentType Obra:', data.content_type_id);
+        setContentTypeObra(data.content_type_id);
+      } catch (err) {
+        console.error('Error al obtener content type de Obra:', err);
+      }
+    };
+
     fetchCategorias();
+    fetchContentTypeObra();
   }, [token]);
 
-  // ✅ Subida a Cloudinary
   const uploadImageToCloudinary = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', 'expresarte_preset');
 
     const res = await fetch('https://api.cloudinary.com/v1_1/drb5jrimz/image/upload', {
-    method: 'POST',
-    body: formData,
-  });
+      method: 'POST',
+      body: formData,
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (!res.ok) {
-    throw new Error(data.error?.message || 'Error al subir imagen');
-  }
+    if (!res.ok) {
+      throw new Error(data.error?.message || 'Error al subir imagen');
+    }
 
-  return data.secure_url;
-};
+    return data.secure_url;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!titulo || !descripcion || !categoriaId || (enVenta && (!precio || !stock))) {
+    // Validación general
+    if (!titulo || !descripcion || !categoriaId) {
       setError('Completa todos los campos requeridos.');
       return;
     }
 
-    if (!imagenArchivo) {
-      setError('Debes subir una imagen.');
+    // Validación precio / stock si es venta
+    if (enVenta) {
+      if (!precio || Number(precio) <= 0 || !stock || stock <= 0) {
+        setError('Completa precio y stock válidos.');
+        return;
+      }
+    }
+
+    // Validación imágenes
+    if (imagenes.length === 0) {
+      setError('Debes subir al menos una imagen.');
       return;
     }
 
     try {
-      const imagenUrl = await uploadImageToCloudinary(imagenArchivo);
-      console.log('✅ Imagen subida a Cloudinary:', imagenUrl);
-
-      const body = {
+      // Crear la obra primero
+      const bodyObra = {
         titulo,
         descripcion,
         precio: enVenta ? precio : 0,
-        imagen_url: imagenUrl,
+        imagen_url: '',
         en_venta: enVenta,
         destacada: false,
         usuario: usuarioId,
@@ -94,23 +114,66 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
         stock: enVenta ? stock : 1,
       };
 
-      console.log('📦 Body enviado:', body);
-
-      const res = await fetch('http://localhost:8000/api/obras/', {
+      const resObra = await fetch('http://localhost:8000/api/obras/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(bodyObra),
       });
 
-      const responseData = await res.json();
-      console.log('📥 Backend respondió:', responseData);
+      const nuevaObra = await resObra.json();
 
-
-      if (!res.ok) {
+      if (!resObra.ok) {
         throw new Error('Error al crear la obra');
+      }
+
+      console.log('✅ Obra creada:', nuevaObra);
+
+      // Subir imágenes en paralelo
+      const urlsSubidas = await Promise.all(
+        imagenes.map(async (imagen) => {
+          const imagenUrl = await uploadImageToCloudinary(imagen);
+          console.log('✅ Imagen subida:', imagenUrl);
+
+          if (contentTypeObra) {
+            await fetch('http://localhost:8000/api/photos/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                content_type: contentTypeObra,
+                object_id: nuevaObra.id,
+                url: imagenUrl,
+              }),
+            });
+
+            console.log('📸 Photo asociada a obra:', imagenUrl);
+          } else {
+            console.error('❌ No se pudo asociar foto: contentTypeObra es null');
+          }
+
+          return imagenUrl; // para actualizar imagen_url después
+        })
+      );
+
+      // Actualizar imagen_url de la obra con la primera
+      if (urlsSubidas.length > 0) {
+        await fetch(`http://localhost:8000/api/obras/${nuevaObra.id}/`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            imagen_url: urlsSubidas[0],
+          }),
+        });
+
+        console.log('🖼️ imagen_url de obra actualizado:', urlsSubidas[0]);
       }
 
       // Limpiar formulario
@@ -118,11 +181,11 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
       setDescripcion('');
       setPrecio('');
       setCategoriaId(null);
-      setImagenArchivo(null);
+      setImagenes([]);
       setEnVenta(true);
       setStock(1);
       onObraCreada();
-      window.location.reload();
+      //window.location.reload();
 
     } catch (err) {
       console.error('❌ Error al subir imagen o guardar obra:', err);
@@ -167,34 +230,52 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
         ))}
       </select>
 
-     {/* Imagen */}
-<div>
-  <label className="block text-sm font-medium text-black mb-1">Imagen</label>
+      {/* Imágenes */}
+      <div>
+        <label className="block text-sm font-medium text-black mb-1">Imágenes</label>
 
-  <div className="flex items-center space-x-4">
-    {/* Botón para elegir archivo */}
-    <label className="bg-black text-white px-4 py-2 rounded cursor-pointer hover:bg-gray-800 transition">
-      Elegir archivo
-      <input
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          if (e.target.files && e.target.files[0]) {
-            setImagenArchivo(e.target.files[0]);
-          }
-        }}
-        required
-      />
-    </label>
+        <div className="flex items-center space-x-4 mb-2">
+          <label className="bg-black text-white px-4 py-2 rounded cursor-pointer hover:bg-gray-800 transition">
+            Elegir archivos
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files) {
+                  setImagenes(Array.from(e.target.files));
+                }
+              }}
+              required
+            />
+          </label>
 
-    {/* Nombre del archivo seleccionado */}
-    <span className="text-black text-sm">
-      {imagenArchivo ? imagenArchivo.name : 'Ningún archivo seleccionado'}
-    </span>
-  </div>
-</div>
+          <span className="text-black text-sm">
+            {imagenes.length > 0
+              ? `${imagenes.length} archivo(s) seleccionado(s)`
+              : 'Ningún archivo seleccionado'}
+          </span>
+        </div>
 
+        {/* PREVIEW de imágenes */}
+        {imagenes.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {imagenes.map((img, index) => {
+              const url = URL.createObjectURL(img);
+              return (
+                <div key={index} className="relative border rounded overflow-hidden">
+                  <img
+                    src={url}
+                    alt={`Preview ${index + 1}`}
+                    className="w-full h-32 object-cover"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Opciones de venta */}
       <div className="mt-4 space-y-2">
@@ -224,7 +305,6 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
                 onChange={(e) => setPrecio(e.target.value)}
                 className="w-full px-3 py-2 border rounded text-black"
                 min={0}
-                required
               />
             </div>
 
@@ -237,7 +317,6 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
                 onChange={(e) => setStock(Number(e.target.value))}
                 className="w-full px-3 py-2 border rounded text-black"
                 min={1}
-                required
               />
             </div>
           </>
