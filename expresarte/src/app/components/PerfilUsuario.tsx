@@ -51,8 +51,8 @@ export default function PerfilUsuario({
 }: Props) {
   const router = useRouter();
   const [user, setUser] = useState<User>(userProp);
-  const [cantidadVisible, setCantidadVisible] = useState(100);
   const [mostrarFormObra, setMostrarFormObra] = useState(false);
+  const [cantidadVisible, setCantidadVisible] = useState<number>(() => obrasEnVenta.length);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [totalLikes, setTotalLikes] = useState<number>(0);

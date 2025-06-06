@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from .models import Usuario, Categoria, Obra, Compra, Favorito, Mensaje, Notificacion, Log, Photo
 class UsuarioSerializer(serializers.ModelSerializer):
     seguidores_count = serializers.SerializerMethodField()
+    password = serializers.CharField(write_only=True, required=False)
     class Meta:
         model = Usuario
         fields = [
@@ -25,10 +26,28 @@ class UsuarioSerializer(serializers.ModelSerializer):
             'is_staff',
             'fecha_creacion',
             'fecha_modificacion',
-            'seguidores_count'
+            'seguidores_count',
+            'password',
         ]
     def get_seguidores_count(self, obj):
         return obj.seguidores.count()
+        
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        user = Usuario(**validated_data)
+        if password:
+            user.set_password(password)
+        user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if password:
+            instance.set_password(password)
+        instance.save()
+        return instance
 
 class UsuarioActualView(APIView):
     permission_classes = [IsAuthenticated]
