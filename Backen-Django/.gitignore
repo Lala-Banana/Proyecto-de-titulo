@@ -28,8 +28,8 @@ Thumbs.db
 *.tmp
 
 # Migrations (opcional si las generas desde cero en producción)
-**/migrations/
-!*/migrations/__init__.py
+#**/migrations/
+#!*/migrations/__init__.py
 
 # Entorno local
 .env

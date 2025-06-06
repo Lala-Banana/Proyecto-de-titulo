@@ -56,16 +56,30 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     apellidos       = models.CharField(max_length=100, null=True, blank=True, help_text="Apellidos del usuario")
     email          = models.EmailField(unique=True)
     telefono       = models.CharField(max_length=25, null=True, blank=True, help_text="Número en formato internacional, p.e. +56912345678")
-    
     google_id      = models.CharField(max_length=100, unique=True, null=True, blank=True)
     foto_url       = models.URLField(null=True, blank=True)
     rut            = models.CharField(max_length=12, null=True, blank=True)
     descripcion    = models.TextField(null=True, blank=True)
     tipo_usuario   = models.CharField(
         max_length=20,
-        choices=[('comprador','Comprador'), ('artista','Artista')],
+        choices=[('comprador','Comprador'), ('artista','Artista'), ('distribuidor','Distribuidor'), ('administrador','Administrador')],
         null=True, blank=True
     )
+    seguidores = models.ManyToManyField(
+        'self',
+        symmetrical=False,
+        related_name='siguiendo',
+        blank=True,
+        help_text='Usuarios que siguen a este usuario'
+    )
+    descuento_distribuidor = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Porcentaje de descuento que el distribuidor puede ofrecer'
+    )
+    
     region        = models.CharField(max_length=50, null=True, blank=True, help_text="Región del usuario")
     dirreccion      = models.CharField(max_length=100, null=True, blank=True, help_text="Dirección del usuario")
     codigo_postal   = models.CharField(max_length=20, null=True, blank=True, help_text="Código postal del usuario")
@@ -79,6 +93,40 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         blank=True,
         help_text="Collector ID de MercadoPago (sandbox o producción) para este usuario."
     )
+    mp_collector_id        = models.BigIntegerField(
+                                null=True,
+                                blank=True,
+                                help_text="Collector ID de MercadoPago (seller_id) de este usuario"
+                            )
+    mp_access_token        = models.CharField(
+                                max_length=255,
+                                null=True,
+                                blank=True,
+                                help_text="Access Token OAuth que habilita operaciones en MP"
+                            )
+    mp_refresh_token       = models.CharField(
+                                max_length=255,
+                                null=True,
+                                blank=True,
+                                help_text="Refresh Token OAuth para renovar el access_token"
+                            )
+    mp_expires_in          = models.IntegerField(
+                                null=True,
+                                blank=True,
+                                help_text="Segundos para que expire el access_token obtenido"
+                            )
+    mp_token_type          = models.CharField(
+                                max_length=50,
+                                null=True,
+                                blank=True,
+                                help_text="Tipo de token (normalmente 'bearer')"
+                            )
+    mp_scopes              = models.CharField(
+                                max_length=255,
+                                null=True,
+                                blank=True,
+                                help_text="Ámbitos (scopes) autorizados en MP"
+                            )
 
     # Fotos adicionales asociadas a este usuario
     fotos = GenericRelation(Photo)
@@ -126,9 +174,37 @@ class Obra(BaseModel):
     usuario          = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     categoria        = models.ForeignKey(Categoria, null=True, on_delete=models.SET_NULL)
     stock = models.PositiveIntegerField(default=1)
-    # Fotos múltiples para cada obra
     fotos = GenericRelation(Photo)
+    venta_x_mayor        = models.BooleanField(
+                              default=False,
+                              help_text="Si esta obra se vende también al por mayor"
+                          )
 
+    # Nuevo campo: descuento en caso de venta por mayor
+    # (porcentaje o monto fijo, según prefieras; aquí es porcentaje)
+    descuento_por_mayor  = models.DecimalField(
+                              max_digits=5,
+                              decimal_places=2,
+                              null=True,
+                              blank=True,
+                              help_text="Descuento (%) a aplicar cuando se compra al por mayor"
+                          )
+
+    # Nuevo campo: comentarios adicionales sobre la obra
+    comentarios          = models.TextField(
+                              null=True,
+                              blank=True,
+                              help_text="Comentarios o notas extra sobre la publicación"
+                          )
+
+    # Nuevo campo: sistema de 'me gusta'
+    # Podemos almacenar qué usuarios le dieron 'like' a esta obra
+    me_gusta             = models.ManyToManyField(
+                              Usuario,
+                              related_name='obras_liked',
+                              blank=True,
+                              help_text="Usuarios que han dado 'me gusta' a esta obra"
+                          )
     def __str__(self):
         return self.titulo
 
