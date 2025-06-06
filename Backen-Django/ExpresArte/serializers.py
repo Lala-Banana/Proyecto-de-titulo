@@ -73,6 +73,7 @@ class CategoriaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ObraSerializer(serializers.ModelSerializer):
+    me_gusta = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     class Meta:
         model = Obra
         fields = '__all__'

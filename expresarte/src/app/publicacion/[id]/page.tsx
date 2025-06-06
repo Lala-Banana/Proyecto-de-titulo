@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import NavbarCombined from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
-import MostrarObra from '@/app/components/MostrarObra'; // ✅ IMPORTADO
+import MostrarObra from '@/app/components/MostrarObra';
 
 interface Usuario {
   id: number;
@@ -30,6 +30,7 @@ interface Obra {
   categoria: number;
   usuario: number;
   stock: number;
+  me_gusta?: number[];
 }
 
 export default function PublicacionPage() {
@@ -43,9 +44,13 @@ export default function PublicacionPage() {
 
   const obraId = pathname.split('/').pop();
 
-  // ——————————————
-  // 1) Fetch de la obra y el artista
-  // ——————————————
+  // ❤️ Estados Me gusta
+  const [likesCount, setLikesCount] = useState<number>(0);
+  const [likedByUser, setLikedByUser] = useState<boolean>(false);
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+
+  // —————————————— FETCH Obra y Artista ——————————————
   useEffect(() => {
     (async () => {
       if (!obraId) {
@@ -55,22 +60,27 @@ export default function PublicacionPage() {
       }
 
       try {
-        // Traer datos de la obra actual
         const res = await fetch(`http://localhost:8000/api/obras/${obraId}/`);
         if (!res.ok) throw new Error(await res.text());
         const obraData: Obra = await res.json();
         setObra(obraData);
 
-        // Traer perfil público del artista
-        const userRes = await fetch(
-          `http://localhost:8000/api/perfil-publico/${obraData.usuario}/`
-        );
+        // ❤️ Inicializar likes
+        setLikesCount(obraData.me_gusta?.length || 0);
+
+        if (token) {
+          const userId = JSON.parse(atob(token.split('.')[1])).user_id;
+          setLikedByUser(obra?.me_gusta ? obra.me_gusta.includes(userId) : false);
+        }
+
+        // Fetch del Artista
+        const userRes = await fetch(`http://localhost:8000/api/perfil-publico/${obraData.usuario}/`);
         if (userRes.ok) {
           const usuarioData: Usuario = await userRes.json();
           setUsuario(usuarioData);
         }
 
-        // Fetch de todas las obras para seleccionar 4 al azar (excluyendo la actual)
+        // Otras obras
         const allRes = await fetch(`http://localhost:8000/api/obras/`);
         if (allRes.ok) {
           const todas: Obra[] = await allRes.json();
@@ -85,11 +95,37 @@ export default function PublicacionPage() {
         setLoading(false);
       }
     })();
-  }, [obraId]);
+  }, [obraId, token]);
 
-  // ———————————————————————————————
-  // 2) Función para generar la preferencia (Ngrok)
-  // ———————————————————————————————
+  // —————————————— ❤️ Toggle Me gusta ——————————————
+  const handleToggleMeGusta = async () => {
+    if (!token || !obra) {
+      alert('Debes iniciar sesión para dar me gusta.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:8000/api/obras/${obra.id}/toggle-me-gusta/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setLikedByUser(data.liked);
+        setLikesCount(data.total_likes);
+      } else {
+        console.error('Error al dar me gusta', res.status);
+      }
+    } catch (err) {
+      console.error('Error al enviar me gusta:', err);
+    }
+  };
+
+  // —————————————— Función COMPRAR ——————————————
   async function handleComprar() {
     if (!obra) return;
 
@@ -122,9 +158,7 @@ export default function PublicacionPage() {
     }
   }
 
-  // ——————————————
-  // 3) Renderizado condicional
-  // ——————————————
+  // —————————————— RENDER ——————————————
   if (loading)
     return <div className="flex items-center justify-center h-screen">Cargando…</div>;
   if (error)
@@ -140,7 +174,7 @@ export default function PublicacionPage() {
       </div>
     );
 
-  // Prepara número de WhatsApp con código de país (Chile: 56)
+  // WhatsApp
   let telefonoParaWhatsapp = '';
   if (usuario?.telefono) {
     const soloDigitos = usuario.telefono.replace(/\D/g, '');
@@ -149,30 +183,42 @@ export default function PublicacionPage() {
       : `56${soloDigitos}`;
   }
 
-  // ——————————————
-  // 4) UI de la página
-  // ——————————————
+  // —————————————— UI ——————————————
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <NavbarCombined />
 
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* ✅ Galería principal usando MostrarObra */}
+          {/* ✅ Galería principal */}
           <section className="lg:col-span-2 space-y-6">
             <MostrarObra obra={obra} />
           </section>
 
-          {/* Sidebar con info y botón “Comprar” */}
+          {/* Sidebar */}
           <aside className="space-y-2">
             <div className="bg-white p-4 rounded-xl shadow-lg space-y-4">
               <h1 className="text-2xl font-bold">{obra.titulo}</h1>
               <p className="text-gray-700">{obra.descripcion}</p>
               <p className="text-sm text-gray-600">Stock disponible: {obra.stock}</p>
+
+              {/* ❤️ Me gusta */}
+              <div className="flex items-center space-x-2 mt-2">
+                <button
+                  onClick={handleToggleMeGusta}
+                  className="text-2xl focus:outline-none"
+                  title={likedByUser ? 'Quitar me gusta' : 'Dar me gusta'}
+                >
+                  {likedByUser ? '❤️' : '🤍'}
+                </button>
+                <span className="text-sm text-gray-600">{likesCount} Me gusta</span>
+              </div>
+
+              {/* Precio y botón */}
               {obra.en_venta ? (
                 <>
                   <p className="text-3xl font-semibold text-green-600">
-                    ${Math.round(obra.precio)}
+                    ${Number(obra.precio).toLocaleString('es-CL')}
                   </p>
                   <button
                     onClick={handleComprar}
@@ -188,6 +234,7 @@ export default function PublicacionPage() {
               )}
             </div>
 
+            {/* Artista */}
             {usuario && (
               <div className="bg-white p-6 rounded-xl shadow-lg space-y-4">
                 <h2 className="text-xl font-semibold mb-2">Artista</h2>
@@ -224,7 +271,7 @@ export default function PublicacionPage() {
                 </ul>
                 <p className="mt-2 text-gray-600">{usuario.descripcion}</p>
 
-                {/* Botones para enviar mensaje por WhatsApp y correo */}
+                {/* Botones contacto */}
                 <div className="mt-4 flex flex-col gap-2">
                   {usuario.email && (
                     <a
@@ -257,9 +304,7 @@ export default function PublicacionPage() {
           </aside>
         </div>
 
-        {/* ——————————————
-            5) Sección de “Otras obras” (4 aleatorias)
-            —————————————— */}
+        {/* Otras obras */}
         {otherObras.length > 0 && (
           <section className="mt-12">
             <h2 className="text-2xl font-semibold mb-6">Otras obras</h2>

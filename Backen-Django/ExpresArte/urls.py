@@ -14,7 +14,8 @@ from .views import (
     CategoriaAdminListView,
     ObrasPorUsuarioView,
     ObraContentTypeView,
-    PhotoListCreateView
+    PhotoListCreateView,
+    toggle_me_gusta
 
 )
 
@@ -85,4 +86,10 @@ urlpatterns = [
 
     # Crear comentario
     path('comentarios/crear/', CrearComentarioView.as_view(), name='crear-comentario'),
+
+    #Me Gusta
+    path('obras/<int:obra_id>/toggle-me-gusta/', toggle_me_gusta, name='toggle-me-gusta'),
+
+
+
 ]

@@ -16,8 +16,7 @@ from .serializers import (
 from rest_framework.permissions import AllowAny, IsAdminUser  # Agregado IsAdminUser
 from .serializers import UsuarioPublicoSerializer
 from django.contrib.contenttypes.models import ContentType
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 
 # Función auxiliar para obtener los tokens
 def get_tokens_for_user(user):
@@ -493,3 +492,25 @@ class CrearComentarioView(APIView):
             serializer.save(usuario=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_me_gusta(request, obra_id):
+    try:
+        obra = Obra.objects.get(id=obra_id)
+    except Obra.DoesNotExist:
+        return Response({'error': 'Obra no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
+    usuario = request.user
+
+    if usuario in obra.me_gusta.all():
+        obra.me_gusta.remove(usuario)
+        liked = False
+    else:
+        obra.me_gusta.add(usuario)
+        liked = True
+
+    return Response({
+        'liked': liked,
+        'total_likes': obra.me_gusta.count()
+    })

@@ -156,7 +156,7 @@ const Navbar = () => {
                       onClick={() => setDropdownOpen(false)}
                       className="block px-2 py-1 hover:bg-gray-100 rounded text-sm"
                     >
-                      Publicac
+                      Publicaciones
                     </Link>
                     <Link
                       href="/usuarios"

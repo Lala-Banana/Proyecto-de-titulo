@@ -11,8 +11,9 @@ interface Obra {
   titulo: string;
   descripcion: string;
   imagen_url: string;
-  precio: string;
+  precio: number;
   en_venta: boolean;
+  me_gusta?: number[]; // ¡AGREGADO para que pueda leer me_gusta!
 }
 
 interface User {
@@ -53,6 +54,8 @@ export default function PerfilUsuario({
   const [mostrarFormObra, setMostrarFormObra] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  const [totalLikes, setTotalLikes] = useState<number>(0);
+
   useEffect(() => {
     const fetchUser = async () => {
       if (!token || !isOwner) return;
@@ -73,6 +76,22 @@ export default function PerfilUsuario({
     };
     fetchUser();
   }, [token, isOwner]);
+
+  // 🚀 Calcular totalLikes
+  useEffect(() => {
+    const sumarLikes = () => {
+      const todasLasObras = [...obrasEnVenta, ...obrasNoVenta];
+
+      const total = todasLasObras.reduce((acc, obra) => {
+        const likes = Array.isArray((obra as any).me_gusta) ? (obra as any).me_gusta.length : 0;
+        return acc + likes;
+      }, 0);
+
+      setTotalLikes(total);
+    };
+
+    sumarLikes();
+  }, [obrasEnVenta, obrasNoVenta]);
 
   const allObras = activeTab === 'venta' ? obrasEnVenta : obrasNoVenta;
   const obrasMostradas = allObras.slice(0, cantidadVisible);
@@ -132,12 +151,13 @@ export default function PerfilUsuario({
             </div>
           )}
 
+          {/* 🚀 Grid de datos */}
           <div className="grid grid-cols-2 gap-3 w-full">
             {[
               { label: 'En venta', count: obrasEnVenta.length },
               { label: 'No en venta', count: obrasNoVenta.length },
               { label: 'Seguidores', count: user.seguidores ?? 0 },
-              { label: 'Me gusta', count: user.me_gusta ?? 0 }
+              { label: 'Me gusta', count: totalLikes }
             ].map((item, i) => (
               <div key={i} className="w-full bg-gray-100 rounded-xl text-black shadow text-center">
                 <p className="text-xl font-bold">{item.count}</p>

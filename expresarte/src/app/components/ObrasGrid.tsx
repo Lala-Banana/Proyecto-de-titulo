@@ -9,7 +9,7 @@ interface Obra {
   titulo: string;
   descripcion: string;
   imagen_url: string;
-  precio: string;
+  precio: number;
   en_venta: boolean;
 }
 
@@ -65,7 +65,7 @@ export default function ObrasGrid({ obras, slug, columnas = 4 }: Props) {
           {/* Precio si está en venta */}
           {obra.en_venta && (
             <div className="absolute top-1 left-1 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-              ${obra.precio}
+              ${Number(obra.precio).toLocaleString('es-CL')}
             </div>
           )}
         </div>
