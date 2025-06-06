@@ -31,7 +31,6 @@ export default function MostrarObra({ obra }: Props) {
   const [imagenPrincipal, setImagenPrincipal] = useState<string>('');
   const [loadingFotos, setLoadingFotos] = useState<boolean>(false);
 
-  // Obtener content type
   useEffect(() => {
     const fetchContentTypeObra = async () => {
       try {
@@ -46,7 +45,6 @@ export default function MostrarObra({ obra }: Props) {
     fetchContentTypeObra();
   }, []);
 
-  // Obtener fotos
   useEffect(() => {
     const fetchFotos = async () => {
       if (contentTypeObra === null) return;
@@ -87,71 +85,63 @@ export default function MostrarObra({ obra }: Props) {
   }, [contentTypeObra, obra.id]);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto bg-white rounded-lg shadow-lg flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
+    <div className="p-6 max-w-6xl mx-auto bg-white rounded-lg shadow-lg space-y-6">
       
-      {/* Columna de imágenes */}
-      <div className="md:w-1/2">
-        {/* Imagen principal */}
-        <div className="mb-4">
-          {loadingFotos ? (
-            <p className="text-center text-gray-500">Cargando fotos...</p>
-          ) : (
-            <img
-              src={
-                imagenPrincipal && imagenPrincipal !== ''
-                  ? imagenPrincipal
-                  : 'https://via.placeholder.com/600x400?text=Sin+imagen'
+      {/* Layout en 2 columnas */}
+<div className="flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
+
+  {/* Columna de imágenes con MÁS ancho */}
+  <div className="w-full">
+    {/* Imagen principal bien grande */}
+    <div className="flex justify-center items-center bg-white p-2 rounded shadow mb-4">
+      {loadingFotos ? (
+        <p className="text-center text-gray-500">Cargando fotos...</p>
+      ) : (
+        <img
+          src={
+            imagenPrincipal && imagenPrincipal !== ''
+              ? imagenPrincipal
+              : 'https://via.placeholder.com/600x400?text=Sin+imagen'
+          }
+          alt={obra.titulo}
+          className="w-full max-h-[800px] object-contain"
+        />
+      )}
+    </div>
+
+    {/* Thumbnails MÁS GRANDES */}
+    {fotos.length > 0 && (
+      <div className="flex space-x-3 mb-4 overflow-x-auto px-1">
+        {fotos.map((foto) => (
+          <img
+            key={foto.id}
+            src={
+              foto.url && foto.url !== ''
+                ? foto.url
+                : 'https://via.placeholder.com/150?text=Sin+foto'
+            }
+            alt={`Miniatura`}
+            onClick={() => {
+              if (foto.url && foto.url !== '') {
+                setImagenPrincipal(foto.url);
               }
-              alt={obra.titulo}
-              className="w-full h-auto rounded object-contain"
-            />
-          )}
-        </div>
-
-        {/* Thumbnails */}
-        {fotos.length > 0 && (
-          <div className="flex space-x-2 mb-4 overflow-x-auto">
-            {fotos.map((foto) => (
-              <img
-                key={foto.id}
-                src={
-                  foto.url && foto.url !== ''
-                    ? foto.url
-                    : 'https://via.placeholder.com/150?text=Sin+foto'
-                }
-                alt={`Miniatura`}
-                onClick={() => {
-                  if (foto.url && foto.url !== '') {
-                    setImagenPrincipal(foto.url);
-                  }
-                }}
-                className={`w-20 h-20 object-cover rounded cursor-pointer border-2 ${
-                  imagenPrincipal === foto.url ? 'border-black' : 'border-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-        )}
+            }}
+            className={`w-32 h-32 object-cover rounded cursor-pointer border-2 ${
+              imagenPrincipal === foto.url ? 'border-black' : 'border-gray-300'
+            }`}
+          />
+        ))}
       </div>
+    )}
+  </div>
 
-      {/* Columna de detalles y comentarios */}
-      <div className="md:w-1/2 flex flex-col space-y-4">
-        {/* Datos de la publicación */}
-        <div>
-          <h1 className="text-3xl font-bold mb-2">{obra.titulo}</h1>
-          <p className="text-gray-700 mb-4">{obra.descripcion}</p>
+</div>
 
-          {obra.en_venta && (
-            <>
-              <p className="text-lg font-semibold mb-2">💰 Precio: ${obra.precio}</p>
-              <p className="text-sm text-gray-600">Stock disponible: {obra.stock}</p>
-            </>
-          )}
-        </div>
-
-        {/* Sección de comentarios */}
+      {/* Sección de comentarios (debajo de todo) */}
+      <div className="mt-6">
         <ComentariosObra obraId={obra.id} />
       </div>
+
     </div>
   );
 }
