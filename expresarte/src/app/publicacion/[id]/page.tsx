@@ -168,10 +168,11 @@ export default function PublicacionPage() {
             <div className="bg-white p-4 rounded-xl shadow-lg space-y-4">
               <h1 className="text-2xl font-bold">{obra.titulo}</h1>
               <p className="text-gray-700">{obra.descripcion}</p>
+              <p className="text-sm text-gray-600">Stock disponible: {obra.stock}</p>
               {obra.en_venta ? (
                 <>
                   <p className="text-3xl font-semibold text-green-600">
-                    ${obra.precio}
+                    ${Math.round(obra.precio)}
                   </p>
                   <button
                     onClick={handleComprar}
