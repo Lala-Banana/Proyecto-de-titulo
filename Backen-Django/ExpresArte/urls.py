@@ -1,7 +1,7 @@
 # urls.py (usando path personalizado para cada ViewSet)
 from django.urls import path
 from .views import (
-    CategoriaAdminDetailView, ObraAdminDetailView, ObraAdminListView, PerfilPublicoView, RegistroView, LoginView, UsuarioActualView, UsuarioAdminDetailView, UsuarioAdminListView, UsuariosPublicosView, crear_preferencia_pro, guardar_usuario_google,
+    CategoriaAdminDetailView, ComentariosDeObraView, CrearComentarioView, ObraAdminDetailView, ObraAdminListView, PerfilPublicoView, RegistroView, LoginView, UsuarioActualView, UsuarioAdminDetailView, UsuarioAdminListView, UsuariosPublicosView, crear_preferencia_pro, guardar_usuario_google,
     CategoriaListCreateView, CategoriaDetailView,
     ObraListCreateView, ObraDetailView,
     CompraListCreateView, CompraDetailView,
@@ -80,4 +80,9 @@ urlpatterns = [
     #Fotos por publicacion
     path('obra-content-type/', ObraContentTypeView.as_view(), name='obra-content-type'),
     path('photos/', PhotoListCreateView.as_view(), name='photo-list-create'),
+
+    path('obras/<int:obra_id>/comentarios/', ComentariosDeObraView.as_view(), name='comentarios-de-obra'),
+
+    # Crear comentario
+    path('comentarios/crear/', CrearComentarioView.as_view(), name='crear-comentario'),
 ]

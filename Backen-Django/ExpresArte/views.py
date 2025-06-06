@@ -7,16 +7,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Categoria, Obra, Compra, Favorito, Mensaje, Notificacion, Log, Usuario, Photo
+from .models import Categoria, Comentario, Obra, Compra, Favorito, Mensaje, Notificacion, Log, Usuario, Photo
 from .serializers import (
     CategoriaSerializer, ObraSerializer, CompraSerializer, FavoritoSerializer,
     MensajeSerializer, NotificacionSerializer, LogSerializer,
-    UsuarioSerializer, RegistroSerializer, LoginSerializer, GoogleLoginSerializer, PhotoSerializer
+    UsuarioSerializer, RegistroSerializer, LoginSerializer, GoogleLoginSerializer, PhotoSerializer, ComentarioSerializer
 )
 from rest_framework.permissions import AllowAny, IsAdminUser  # Agregado IsAdminUser
 from .serializers import UsuarioPublicoSerializer
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+
 
 # Función auxiliar para obtener los tokens
 def get_tokens_for_user(user):
@@ -473,3 +474,22 @@ class PhotoListCreateView(generics.ListCreateAPIView):
             queryset = queryset.filter(object_id=object_id, content_type_id=content_type)
 
         return queryset
+
+class ComentariosDeObraView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request, obra_id):
+        comentarios = Comentario.objects.filter(obra_id=obra_id).order_by('-fecha')
+        serializer = ComentarioSerializer(comentarios, many=True)
+        return Response(serializer.data)
+
+class CrearComentarioView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def post(self, request):
+        serializer = ComentarioSerializer(data=request.data)
+        if serializer.is_valid():
+            # Asignar automáticamente el usuario autenticado
+            serializer.save(usuario=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 

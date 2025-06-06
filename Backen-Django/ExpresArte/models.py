@@ -190,13 +190,6 @@ class Obra(BaseModel):
                               help_text="Descuento (%) a aplicar cuando se compra al por mayor"
                           )
 
-    # Nuevo campo: comentarios adicionales sobre la obra
-    comentarios          = models.TextField(
-                              null=True,
-                              blank=True,
-                              help_text="Comentarios o notas extra sobre la publicación"
-                          )
-
     # Nuevo campo: sistema de 'me gusta'
     # Podemos almacenar qué usuarios le dieron 'like' a esta obra
     me_gusta             = models.ManyToManyField(
@@ -309,3 +302,13 @@ class UsuarioBackup(models.Model):
     fecha_modificacion  = models.DateTimeField()
     fecha_respaldo      = models.DateTimeField(auto_now_add=True)
     fondo               = models.TextField(null=True)
+
+
+class Comentario(BaseModel):
+    usuario   = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='comentarios')
+    obra      = models.ForeignKey(Obra, on_delete=models.CASCADE, related_name='comentarios')
+    contenido = models.TextField()
+    fecha     = models.DateTimeField(auto_now_add=True)
+
+    def str(self):
+        return f"Comentario de {self.usuario} en {self.obra}: {self.contenido[:30]}"
