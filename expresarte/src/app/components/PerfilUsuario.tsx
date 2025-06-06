@@ -161,7 +161,7 @@ export default function PerfilUsuario({
       <div className="w-full lg:w-[320px] p-6 border-b lg:border-b-0 lg:sticky lg:top-[80px] z-20 bg-white/20 backdrop-blur-sm">
         <div className="flex flex-col items-center">
           <Image
-            src={user.foto_url || '/default-avatar.png'}
+            src={user.foto_url || 'https://us.123rf.com/450wm/tuktukdesign/tuktukdesign1608/tuktukdesign160800036/61010819-icono-de-usuario-hombre-perfil-hombre-de-negocios-avatar-ilustraci%C3%B3n-vectorial-persona-glifo.jpg?ver=6'}
             alt="Perfil"
             width={200}
             height={200}

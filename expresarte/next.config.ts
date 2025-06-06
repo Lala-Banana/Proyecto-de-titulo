@@ -69,6 +69,16 @@ const nextConfig = {
         hostname: 'cl.pinterest.com',
         pathname: '/**',
       },
+       {
+        protocol: 'https',
+        hostname: 'images.icon-icons.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'us.123rf.com',
+        pathname: '/**',
+      },
     ],
   },
 };

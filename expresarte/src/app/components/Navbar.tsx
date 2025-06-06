@@ -89,7 +89,7 @@ const Navbar = () => {
           {user ? (
             <>
               <Image
-                src={user.foto_url || '/default-avatar.png'}
+                src={user.foto_url || 'https://us.123rf.com/450wm/tuktukdesign/tuktukdesign1608/tuktukdesign160800036/61010819-icono-de-usuario-hombre-perfil-hombre-de-negocios-avatar-ilustraci%C3%B3n-vectorial-persona-glifo.jpg?ver=6'}
                 alt="User"
                 width={36}
                 height={36}

@@ -45,14 +45,16 @@ class GoogleLoginSerializer(serializers.Serializer):
     foto_url = serializers.URLField(required=False, allow_blank=True)
     google_id = serializers.CharField(required=False, allow_blank=True)
 
+DEFAULT_FONDO = 'https://images.unsplash.com/photo-1415889455891-23bbf19ee5c7?q=80&w=1476&auto=format&fit=crop'
 class RegistroSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     class Meta:
         model = Usuario
-        fields = ['nombre', 'email', 'password']
+        fields = ['nombre', 'email', 'password', 'fondo']
 
     def create(self, validated_data):
+        fondo = validated_data.get('fondo', DEFAULT_FONDO)
         user = Usuario.objects.create_user(
             email=validated_data['email'],
             nombre=validated_data['nombre'],

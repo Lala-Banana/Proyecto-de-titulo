@@ -11,6 +11,8 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+  const DEFAULT_FONDO = 'https://images.unsplash.com/photo-1415889455891-23bbf19ee5c7?q=80&w=1476&auto=format&fit=crop';
+
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -99,6 +101,7 @@ export default function LoginForm() {
         nombre: user.name || '',
         foto_url: user.image || '',
         google_id,
+        fondo: DEFAULT_FONDO,
       }),
     });
 
