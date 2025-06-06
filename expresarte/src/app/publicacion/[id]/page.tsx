@@ -68,11 +68,6 @@ export default function PublicacionPage() {
         // ❤️ Inicializar likes
         setLikesCount(obraData.me_gusta?.length || 0);
 
-        if (token) {
-          const userId = JSON.parse(atob(token.split('.')[1])).user_id;
-          setLikedByUser(obra?.me_gusta ? obra.me_gusta.includes(userId) : false);
-        }
-
         // Fetch del Artista
         const userRes = await fetch(`http://localhost:8000/api/perfil-publico/${obraData.usuario}/`);
         if (userRes.ok) {
@@ -96,6 +91,14 @@ export default function PublicacionPage() {
       }
     })();
   }, [obraId, token]);
+
+  // ❤️ Actualizar likedByUser cuando cambie obra
+  useEffect(() => {
+    if (obra && token) {
+      const userId = JSON.parse(atob(token.split('.')[1])).user_id;
+      setLikedByUser(obra.me_gusta ? obra.me_gusta.includes(userId) : false);
+    }
+  }, [obra, token]);
 
   // —————————————— ❤️ Toggle Me gusta ——————————————
   const handleToggleMeGusta = async () => {

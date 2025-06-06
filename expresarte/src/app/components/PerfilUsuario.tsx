@@ -95,6 +95,12 @@ export default function PerfilUsuario({
     sumarLikes();
   }, [obrasEnVenta, obrasNoVenta]);
 
+  useEffect(() => {
+  const nuevasObras = activeTab === 'venta' ? obrasEnVenta : obrasNoVenta;
+  setCantidadVisible(nuevasObras.length);
+}, [activeTab, obrasEnVenta, obrasNoVenta]);
+
+
   // 🚀 Verificar si sigo al usuario
   useEffect(() => {
     const checkIfFollowing = async () => {

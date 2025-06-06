@@ -68,7 +68,7 @@ const Navbar = () => {
             Categorías
           </Link>
           <Link href="/obras" className="hover:underline text-sm">
-            Publicac
+            Publicaciones
           </Link>
           <Link href="/usuarios" className="hover:underline text-sm">
             Usuarios

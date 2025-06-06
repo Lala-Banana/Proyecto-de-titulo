@@ -17,6 +17,8 @@ from rest_framework.permissions import AllowAny, IsAdminUser  # Agregado IsAdmin
 from .serializers import UsuarioPublicoSerializer
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from django.db import connection
+
 
 # Función auxiliar para obtener los tokens
 def get_tokens_for_user(user):
@@ -266,9 +268,16 @@ class CategoriaAdminListView(generics.ListCreateAPIView):
     permission_classes = [IsAdminUser]
 
     def perform_create(self, serializer):
+        # 🚀 Actualizar la secuencia ANTES de crear
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT setval(pg_get_serial_sequence('"ExpresArte_categoria"', 'id'), 
+                              COALESCE((SELECT MAX(id) FROM "ExpresArte_categoria"), 1));
+            """)
+
+        # Luego crear normalmente
         categoria = serializer.save()
         registrar_log(self.request.user, 'Categoria', categoria.id, 'creacion', f"Categoría '{categoria.nombre}' creada.")
-
 class CategoriaAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer

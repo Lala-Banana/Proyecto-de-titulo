@@ -1,52 +1,100 @@
-'use client'
+'use client';
 
-import { useEffect, useState, useRef } from 'react'
-import Image from 'next/image'
-import { fetchConAuth } from '@/lib/auth'
+import { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
+import { fetchConAuth } from '@/lib/auth';
 
 interface Categoria {
-  id: number
-  nombre: string
-  descripcion: string
-  slug: string
-  visible: boolean
-  imagen_url: string
+  id: number;
+  nombre: string;
+  descripcion: string;
+  slug: string;
+  visible: boolean;
+  imagen_url: string;
 }
 
 export default function CategoriasPage() {
-  const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'
-  const [categorias, setCategorias] = useState<Categoria[]>([])
-  const [nombre, setNombre] = useState('')
-  const [descripcion, setDescripcion] = useState('')
-  const [slug, setSlug] = useState('')
-  const [visible, setVisible] = useState(true)
-  const [imagenUrl, setImagenUrl] = useState('')
-  const [editandoId, setEditandoId] = useState<number | null>(null)
-  const [mensaje, setMensaje] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const formularioRef = useRef<HTMLDivElement | null>(null)
+  const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
-  const getToken = () => localStorage.getItem('access_token') ?? ''
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [nombre, setNombre] = useState('');
+  const [descripcion, setDescripcion] = useState('');
+  const [slug, setSlug] = useState('');
+  const [visible, setVisible] = useState(true);
+  const [imagenUrl, setImagenUrl] = useState('');
+  const [imagen, setImagen] = useState<File | null>(null);
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
+  const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [mensaje, setMensaje] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const formularioRef = useRef<HTMLDivElement | null>(null);
+
+  const getToken = () => localStorage.getItem('access_token') ?? '';
 
   const fetchCategorias = async () => {
-    const token = getToken()
-    const data = await fetchConAuth(`${BASE}/api/admin/categorias/`, token, setError)
-    if (data && Array.isArray(data)) setCategorias(data)
-    else setCategorias([])
-  }
+    const token = getToken();
+    const data = await fetchConAuth(`${BASE}/api/admin/categorias/`, token, setError);
+    if (data && Array.isArray(data)) setCategorias(data);
+    else setCategorias([]);
+  };
 
   useEffect(() => {
-    fetchCategorias()
-  }, [])
+    fetchCategorias();
+  }, []);
+
+  const uploadImageToCloudinary = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'expresarte_preset');
+
+    const res = await fetch('https://api.cloudinary.com/v1_1/drb5jrimz/image/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error?.message || 'Error al subir imagen');
+    }
+
+    return data.secure_url;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const payload = { nombre, descripcion, slug, imagen_url: imagenUrl, visible }
-    const token = getToken()
+    e.preventDefault();
+    setError(null);
+
+    let imagenUrlFinal = imagenUrl;
+
+    if (imagen) {
+      try {
+        setSubiendoImagen(true);
+        imagenUrlFinal = await uploadImageToCloudinary(imagen);
+        console.log('✅ Imagen subida:', imagenUrlFinal);
+      } catch (err) {
+        console.error('❌ Error al subir imagen:', err);
+        setError('No se pudo subir la imagen.');
+        setSubiendoImagen(false);
+        return;
+      } finally {
+        setSubiendoImagen(false);
+      }
+    }
+
+    const payload = {
+      nombre,
+      descripcion,
+      slug,
+      imagen_url: imagenUrlFinal,
+      visible,
+    };
+
+    const token = getToken();
     const url = editandoId
       ? `${BASE}/api/admin/categorias/${editandoId}/`
-      : `${BASE}/api/admin/categorias/`
-    const method = editandoId ? 'PUT' : 'POST'
+      : `${BASE}/api/admin/categorias/`;
+    const method = editandoId ? 'PUT' : 'POST';
 
     try {
       const res = await fetch(url, {
@@ -56,39 +104,39 @@ export default function CategoriasPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
-      })
+      });
+
       if (!res.ok) {
-        const errorText = await res.text()
-        console.error(`❌ Error al guardar (${res.status}):`, errorText)
-        return
+        const errorText = await res.text();
+        console.error(`❌ Error al guardar (${res.status}):`, errorText);
+        setError('No se pudo guardar la categoría.');
+        return;
       }
-      setNombre('')
-      setDescripcion('')
-      setSlug('')
-      setImagenUrl('')
-      setVisible(true)
-      setEditandoId(null)
-      fetchCategorias()
-      setMensaje(editandoId ? '✅ Categoría actualizada exitosamente.' : '✅ Categoría creada exitosamente.')
-      setTimeout(() => setMensaje(null), 3000)
+
+      limpiarFormulario();
+      fetchCategorias();
+      setMensaje(editandoId ? '✅ Categoría actualizada exitosamente.' : '✅ Categoría creada exitosamente.');
+      setTimeout(() => setMensaje(null), 3000);
     } catch (error) {
-      console.error('❌ Error de red al guardar categoría:', error)
+      console.error('❌ Error de red al guardar categoría:', error);
+      setError('No se pudo guardar la categoría.');
     }
-  }
+  };
 
   const handleEditar = (cat: Categoria) => {
-    setNombre(cat.nombre)
-    setDescripcion(cat.descripcion)
-    setSlug(cat.slug)
-    setImagenUrl(cat.imagen_url)
-    setVisible(cat.visible)
-    setEditandoId(cat.id)
-    formularioRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+    setNombre(cat.nombre);
+    setDescripcion(cat.descripcion);
+    setSlug(cat.slug);
+    setImagenUrl(cat.imagen_url);
+    setImagen(null);
+    setVisible(cat.visible);
+    setEditandoId(cat.id);
+    formularioRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const handleEliminar = async (id: number) => {
-    if (!confirm('¿Eliminar esta categoría?')) return
-    const token = getToken()
+    if (!confirm('¿Eliminar esta categoría?')) return;
+    const token = getToken();
     try {
       const res = await fetch(`${BASE}/api/admin/categorias/${id}/`, {
         method: 'DELETE',
@@ -96,31 +144,42 @@ export default function CategoriasPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-      })
+      });
       if (!res.ok) {
-        console.error(`❌ Error al eliminar (${res.status})`)
-        return
+        console.error(`❌ Error al eliminar (${res.status})`);
+        return;
       }
-      fetchCategorias()
-      setMensaje('🗑️ Categoría eliminada exitosamente.')
-      setTimeout(() => setMensaje(null), 3000)
+      fetchCategorias();
+      setMensaje('🗑️ Categoría eliminada exitosamente.');
+      setTimeout(() => setMensaje(null), 3000);
     } catch (error) {
-      console.error('❌ Error de red al eliminar categoría:', error)
+      console.error('❌ Error de red al eliminar categoría:', error);
     }
-  }
+  };
 
-  // ✅ Mostrar solo el mensaje si hay error (como no estar autenticado)
+  const limpiarFormulario = () => {
+    setNombre('');
+    setDescripcion('');
+    setSlug('');
+    setImagenUrl('');
+    setImagen(null);
+    setVisible(true);
+    setEditandoId(null);
+    setError(null);
+    setMensaje(null);
+    formularioRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   if (error) {
     return (
       <div className="p-6 bg-white min-h-screen text-black">
         <div className="bg-red-100 text-red-800 p-4 rounded shadow">{error}</div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="p-4 bg-white min-h-screen text-black">
-      
       <h2 className="text-3xl font-bold mb-6">Categorías</h2>
 
       {mensaje && (
@@ -152,13 +211,56 @@ export default function CategoriasPage() {
               placeholder="Descripción"
               className="bg-gray-200 text-black border border-gray-300 p-2 rounded col-span-2"
             />
-            <input
-              value={imagenUrl}
-              onChange={(e) => setImagenUrl(e.target.value)}
-              placeholder="URL de la imagen"
-              className="bg-gray-200 text-black border border-gray-300 p-2 rounded col-span-2"
-            />
+
+            <div className="col-span-2 space-y-2">
+              <label className="block text-sm font-medium text-black mb-1">Imagen</label>
+              <div className="flex items-center space-x-4 mb-2">
+                <label className="bg-black text-white px-4 py-2 rounded cursor-pointer hover:bg-gray-800 transition">
+                  Elegir archivo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        setImagen(e.target.files[0]);
+                      }
+                    }}
+                  />
+                </label>
+
+                <span className="text-black text-sm">
+                  {imagen ? imagen.name : imagenUrl ? 'Imagen existente' : 'Ningún archivo seleccionado'}
+                </span>
+
+                {(imagen || imagenUrl) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImagen(null);
+                      setImagenUrl('');
+                    }}
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+                  >
+                    Limpiar imagen
+                  </button>
+                )}
+              </div>
+
+              {(imagen || imagenUrl) && (
+                <div className="relative border rounded overflow-hidden w-32 h-32">
+                  <img
+                    src={imagen ? URL.createObjectURL(imagen) : imagenUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+
+              {subiendoImagen && <p className="text-blue-600 mt-2">Subiendo imagen...</p>}
+            </div>
           </div>
+
           <div className="flex items-center gap-4 mt-4">
             <label className="inline-flex items-center">
               <input
@@ -169,11 +271,21 @@ export default function CategoriasPage() {
               />
               <span className="ml-2">Visible</span>
             </label>
+
             <button
               type="submit"
               className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded text-white"
+              disabled={subiendoImagen}
             >
               {editandoId ? 'Actualizar' : 'Agregar'} Categoría
+            </button>
+
+            <button
+              type="button"
+              onClick={limpiarFormulario}
+              className="bg-gray-500 hover:bg-gray-600 px-6 py-2 rounded text-white"
+            >
+              Limpiar
             </button>
           </div>
         </form>
@@ -198,13 +310,13 @@ export default function CategoriasPage() {
               <td className="p-3">
                 {cat.imagen_url ? (
                   <a href={`/categoria/${cat.slug}`}>
-                  <Image
-                    src={cat.imagen_url}
-                    alt={cat.nombre}
-                    width={50}
-                    height={50}
-                    className="rounded object-cover"
-                  />
+                    <Image
+                      src={cat.imagen_url}
+                      alt={cat.nombre}
+                      width={50}
+                      height={50}
+                      className="rounded object-cover"
+                    />
                   </a>
                 ) : (
                   <span className="text-gray-400">Sin imagen</span>
@@ -233,5 +345,5 @@ export default function CategoriasPage() {
         </tbody>
       </table>
     </div>
-  )
+  );
 }
