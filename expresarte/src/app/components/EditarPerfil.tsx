@@ -115,25 +115,82 @@ export default function EditarPerfil() {
     }
   };
 
+  // 🚀 Aquí está la función correcta para subir imagen a Cloudinary
+  const uploadImageToCloudinary = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'expresarte_preset');  // usa el mismo preset que en obras
+
+    const res = await fetch('https://api.cloudinary.com/v1_1/drb5jrimz/image/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error?.message || 'Error al subir imagen');
+    }
+
+    return data.secure_url as string;
+  };
+
   if (loading) return <p className="text-center py-8">Cargando perfil...</p>;
 
   return (
     <div className="max-w mx-auto p-8 bg-white ">
       <h1 className="text-2xl font-bold mb-6">Editar perfil</h1>
       <form onSubmit={handleSubmit} className="space-y-6">
+
         {/* FOTO DE PERFIL */}
         <div>
           <label className="block mb-2 text-black font-medium">Foto de perfil</label>
+
           {user.foto_url && (
-            <img src={user.foto_url} alt="Avatar" className="w-32 h-32 rounded-full object-cover mb-2" />
+            <img
+              src={user.foto_url}
+              alt="Avatar"
+              className="w-32 h-32 rounded-full object-cover mb-2"
+            />
           )}
+
+          {/* URL manual (opcional) */}
           <input
             type="text"
             placeholder="URL de tu foto"
             value={user.foto_url}
             onChange={(e) => setUser({ ...user, foto_url: e.target.value })}
-            className="w-full border border-gray-300 p-2 rounded text-black placeholder-gray-500"
+            className="w-full border border-gray-300 p-2 rounded text-black placeholder-gray-500 mb-2"
           />
+
+          {/* Subir desde PC */}
+          <div>
+            <label className="block text-sm font-medium text-black mb-1">O selecciona desde tu computador</label>
+
+            <label className="bg-black text-white px-4 py-2 rounded cursor-pointer hover:bg-gray-800 transition inline-block">
+              Elegir archivo
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  try {
+                    const imagenUrl = await uploadImageToCloudinary(file);
+                    console.log('✅ Imagen de perfil subida:', imagenUrl);
+
+                    // Actualizar user.foto_url
+                    setUser({ ...user, foto_url: imagenUrl });
+                  } catch (err) {
+                    console.error('❌ Error al subir imagen de perfil:', err);
+                    alert('No se pudo subir la imagen de perfil.');
+                  }
+                }}
+              />
+            </label>
+          </div>
         </div>
 
         {/* DATOS BÁSICOS */}
@@ -205,7 +262,7 @@ export default function EditarPerfil() {
             <select
               value={user.tipo_usuario}
               onChange={(e) =>
-                setUser({ ...user, tipo_usuario: e.target.value as 'comprador' | 'artista' | 'Distribuidor' |'' })
+                setUser({ ...user, tipo_usuario: e.target.value as 'comprador' | 'artista' | 'Distribuidor' | '' })
               }
               className="w-full border border-gray-300 p-2 rounded text-black"
             >
@@ -214,8 +271,7 @@ export default function EditarPerfil() {
               </option>
               <option value="comprador">Comprador</option>
               <option value="artista">Artista</option>
-              <option value="distribuidor">Distribuiodor</option>
-
+              <option value="distribuidor">Distribuidor</option>
             </select>
           </div>
         </fieldset>
@@ -227,9 +283,8 @@ export default function EditarPerfil() {
             {fondos.map((url, idx) => (
               <div
                 key={idx}
-                className={`border-4 ${
-                  user.fondo === url ? 'border-blue-500' : 'border-transparent'
-                } rounded overflow-hidden cursor-pointer`}
+                className={`border-4 ${user.fondo === url ? 'border-blue-500' : 'border-transparent'
+                  } rounded overflow-hidden cursor-pointer`}
                 onClick={() => setUser({ ...user, fondo: url })}
               >
                 <img src={url} alt={`Fondo ${idx + 1}`} className="w-full h-24 object-cover" />

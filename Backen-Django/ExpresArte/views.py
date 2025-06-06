@@ -479,7 +479,7 @@ class ComentariosDeObraView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, obra_id):
-        comentarios = Comentario.objects.filter(obra_id=obra_id).order_by('-fecha')
+        comentarios = Comentario.objects.filter(obra_id=obra_id).order_by('fecha')
         serializer = ComentarioSerializer(comentarios, many=True)
         return Response(serializer.data)
 

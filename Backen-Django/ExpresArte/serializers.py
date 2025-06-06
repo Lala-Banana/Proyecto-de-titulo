@@ -128,9 +128,15 @@ class PhotoSerializer(serializers.ModelSerializer):
         model = Photo
         fields = ['id', 'content_type', 'object_id', 'url', 'uploaded_at']
 
+class UsuarioMinSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Usuario
+        fields = ['id', 'nombre', 'foto_url']
+
 class ComentarioSerializer(serializers.ModelSerializer):
+    usuario = UsuarioMinSerializer(read_only=True)  # Trae nombre + foto del usuario
+
     class Meta:
         model = Comentario
         fields = ['id', 'usuario', 'obra', 'contenido', 'fecha']
-        read_only_fields = ['id', 'fecha']
-  
+        read_only_fields = ['id', 'fecha', 'usuario']
