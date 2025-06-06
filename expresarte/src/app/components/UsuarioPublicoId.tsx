@@ -9,8 +9,9 @@ interface Obra {
   titulo: string;
   descripcion: string;
   imagen_url: string;
-  precio: string;
+  precio: number;
   en_venta: boolean;
+  me_gusta?: number[];
 }
 
 interface User {
@@ -18,12 +19,10 @@ interface User {
   nombre: string;
   foto_url: string;
   descripcion: string;
-  seguidores?: number;
-  me_gusta?: number;
-  ubicacion?: string;
+  seguidores_count?: number;
+  region?: string;
   fondo?: string;
   rut?: string;
-  region?: string;
   tipo_usuario?: 'comprador' | 'artista';
 }
 
@@ -35,6 +34,10 @@ export default function UsuarioPublicoId() {
   const [activeTab, setActiveTab] = useState<'venta' | 'noVenta'>('venta');
   const [loadingUser, setLoadingUser] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [isOwner, setIsOwner] = useState<boolean>(false);
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 
   // 1. Cargar perfil público
   useEffect(() => {
@@ -53,6 +56,16 @@ export default function UsuarioPublicoId() {
         }
         const data: User = await res.json();
         setUser(data);
+
+        // 🚀 Verificar si es mi perfil
+        if (token) {
+          const decoded = JSON.parse(atob(token.split('.')[1]));
+          const myUserId = decoded.user_id;
+          setIsOwner(myUserId === parseInt(id));
+        } else {
+          setIsOwner(false);
+        }
+
       } catch (err: any) {
         console.error('❌ Error fetching perfil:', err);
         setError(err.message);
@@ -62,7 +75,7 @@ export default function UsuarioPublicoId() {
     }
 
     fetchPerfil();
-  }, [id]);
+  }, [id, token]);
 
   // 2. Cargar obras cuando el perfil esté listo
   useEffect(() => {
@@ -105,12 +118,12 @@ export default function UsuarioPublicoId() {
       <div className="relative z-10">
         <PerfilUsuario
           user={user}
-          token=""
+          token={token || ''}
           obrasEnVenta={obrasEnVenta}
           obrasNoVenta={obrasNoVenta}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          isOwner={false}
+          isOwner={isOwner}  // 🚀 Pasamos isOwner calculado!
         />
       </div>
     </div>

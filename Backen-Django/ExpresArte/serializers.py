@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Usuario, Categoria, Obra, Compra, Favorito, Mensaje, Notificacion, Log, Photo
 class UsuarioSerializer(serializers.ModelSerializer):
+    seguidores_count = serializers.SerializerMethodField()
     class Meta:
         model = Usuario
         fields = [
@@ -24,7 +25,10 @@ class UsuarioSerializer(serializers.ModelSerializer):
             'is_staff',
             'fecha_creacion',
             'fecha_modificacion',
+            'seguidores_count'
         ]
+    def get_seguidores_count(self, obj):
+        return obj.seguidores.count()
 
 class UsuarioActualView(APIView):
     permission_classes = [IsAuthenticated]
@@ -110,6 +114,7 @@ class LogSerializer(serializers.ModelSerializer):
 
 
 class UsuarioPublicoSerializer(serializers.ModelSerializer):
+    seguidores_count = serializers.SerializerMethodField()
     class Meta:
         model = Usuario
         fields = [
@@ -122,7 +127,11 @@ class UsuarioPublicoSerializer(serializers.ModelSerializer):
             'fondo',
             'telefono',
             'region',
+            'seguidores_count',
         ]
+    def get_seguidores_count(self, obj):
+        return obj.seguidores.count()
+
 
 class PhotoSerializer(serializers.ModelSerializer):
     class Meta:

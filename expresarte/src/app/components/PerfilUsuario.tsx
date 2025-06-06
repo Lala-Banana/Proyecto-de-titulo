@@ -13,7 +13,7 @@ interface Obra {
   imagen_url: string;
   precio: number;
   en_venta: boolean;
-  me_gusta?: number[]; // ¡AGREGADO para que pueda leer me_gusta!
+  me_gusta?: number[];
 }
 
 interface User {
@@ -27,6 +27,7 @@ interface User {
   fondo?: string;
   rut?: string;
   tipo_usuario?: 'comprador' | 'artista';
+  seguidores_count?: number;
 }
 
 interface Props {
@@ -55,6 +56,7 @@ export default function PerfilUsuario({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [totalLikes, setTotalLikes] = useState<number>(0);
+  const [isFollowing, setIsFollowing] = useState<boolean>(false); // 🚀 para botón Seguir
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -83,7 +85,7 @@ export default function PerfilUsuario({
       const todasLasObras = [...obrasEnVenta, ...obrasNoVenta];
 
       const total = todasLasObras.reduce((acc, obra) => {
-        const likes = Array.isArray((obra as any).me_gusta) ? (obra as any).me_gusta.length : 0;
+        const likes = Array.isArray(obra.me_gusta) ? obra.me_gusta.length : 0;
         return acc + likes;
       }, 0);
 
@@ -92,6 +94,55 @@ export default function PerfilUsuario({
 
     sumarLikes();
   }, [obrasEnVenta, obrasNoVenta]);
+
+  // 🚀 Verificar si sigo al usuario
+  useEffect(() => {
+    const checkIfFollowing = async () => {
+      if (!token || isOwner) return;
+      try {
+        const res = await fetch(`http://localhost:8000/api/usuarios/${user.id}/is-following/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setIsFollowing(data.is_following);
+        }
+      } catch (err) {
+        console.error('Error checking following:', err);
+      }
+    };
+
+    checkIfFollowing();
+  }, [token, user.id, isOwner]);
+
+  // 🚀 Toggle seguir/dejar de seguir
+  const handleToggleSeguir = async () => {
+    if (!token || isOwner) return;
+    try {
+      const res = await fetch(`http://localhost:8000/api/usuarios/${user.id}/toggle-follow/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const nuevoIsFollowing = data.is_following;
+
+        setIsFollowing(nuevoIsFollowing);
+
+        // 🚀 ACTUALIZAR seguidores_count dinámicamente
+        setUser((prevUser) => ({
+          ...prevUser,
+          seguidores_count:
+            (prevUser.seguidores_count ?? 0) + (nuevoIsFollowing ? 1 : -1),
+        }));
+      }
+    } catch (err) {
+      console.error('Error toggling follow:', err);
+    }
+  };
 
   const allObras = activeTab === 'venta' ? obrasEnVenta : obrasNoVenta;
   const obrasMostradas = allObras.slice(0, cantidadVisible);
@@ -120,13 +171,18 @@ export default function PerfilUsuario({
           <p className="text-sm text-gray-100 text-center">
             Rol:{' '}
             <span className="font-semibold capitalize">
-              {user.tipo_usuario === 'artista' ? 'Artista' :
-                user.tipo_usuario === 'comprador' ? 'Comprador' :
-                user.tipo_usuario === 'distribuidor' ? 'Distribuidor' :
-                  'No especificado'}
+              {user.tipo_usuario === 'artista'
+                ? 'Artista'
+                : user.tipo_usuario === 'comprador'
+                ? 'Comprador'
+                : user.tipo_usuario === 'distribuidor'
+                ? 'Distribuidor'
+                : 'No especificado'}
             </span>
           </p>
-          <p className="text-sm text-gray-100 text-center mb-2">Región: <span className="font-semibold">{user.region}</span></p>
+          <p className="text-sm text-gray-100 text-center mb-2">
+            Región: <span className="font-semibold">{user.region}</span>
+          </p>
           <p className="w-4/5 mx-auto text-sm text-gray-100 text-center mb-4 break-words">
             {user.descripcion || 'Sin descripción'}
           </p>
@@ -151,15 +207,30 @@ export default function PerfilUsuario({
             </div>
           )}
 
+          {/* 🚀 Botón seguir / dejar de seguir */}
+          {!isOwner && (
+            <div className="flex justify-center w-full mb-4">
+              <button
+                onClick={handleToggleSeguir}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition text-sm"
+              >
+                {isFollowing ? 'Dejar de seguir' : 'Seguir'}
+              </button>
+            </div>
+          )}
+
           {/* 🚀 Grid de datos */}
           <div className="grid grid-cols-2 gap-3 w-full">
             {[
               { label: 'En venta', count: obrasEnVenta.length },
               { label: 'No en venta', count: obrasNoVenta.length },
-              { label: 'Seguidores', count: user.seguidores ?? 0 },
-              { label: 'Me gusta', count: totalLikes }
+              { label: 'Seguidores', count: user.seguidores_count ?? 0 },
+              { label: 'Me gusta', count: totalLikes },
             ].map((item, i) => (
-              <div key={i} className="w-full bg-gray-100 rounded-xl text-black shadow text-center">
+              <div
+                key={i}
+                className="w-full bg-gray-100 rounded-xl text-black shadow text-center"
+              >
                 <p className="text-xl font-bold">{item.count}</p>
                 <p className="text-sm text-gray-600">{item.label}</p>
               </div>
@@ -175,7 +246,11 @@ export default function PerfilUsuario({
             {['venta', 'noVenta'].map((tab) => (
               <button
                 key={tab}
-                className={`w-1/2 py-3 font-semibold text-sm ${activeTab === tab ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'}`}
+                className={`w-1/2 py-3 font-semibold text-sm ${
+                  activeTab === tab
+                    ? 'bg-black text-white'
+                    : 'bg-white text-black hover:bg-gray-100'
+                }`}
                 onClick={() => reiniciarScrollYCantidad(tab as 'venta' | 'noVenta')}
               >
                 {tab === 'venta' ? 'Publicaciones en venta' : 'No en venta'}
@@ -186,7 +261,10 @@ export default function PerfilUsuario({
 
         <div className="px-6 pb-6 animate-fade-in">
           {obrasMostradas.length > 0 ? (
-            <ObrasGrid obras={obrasMostradas} slug={user.nombre.toLowerCase().replace(/\s+/g, '-')} />
+            <ObrasGrid
+              obras={obrasMostradas}
+              slug={user.nombre.toLowerCase().replace(/\s+/g, '-')}
+            />
           ) : (
             <p className="text-center text-gray-600 text-lg mt-20">
               {activeTab === 'venta'

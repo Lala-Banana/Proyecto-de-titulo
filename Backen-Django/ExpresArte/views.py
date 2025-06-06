@@ -514,3 +514,35 @@ def toggle_me_gusta(request, obra_id):
         'liked': liked,
         'total_likes': obra.me_gusta.count()
     })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def is_following_view(request, usuario_id):
+    try:
+        usuario_obj = Usuario.objects.get(id=usuario_id)
+    except Usuario.DoesNotExist:
+        return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+    is_following = request.user in usuario_obj.seguidores.all()
+
+    return Response({'is_following': is_following})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_follow_view(request, usuario_id):
+    try:
+        usuario_obj = Usuario.objects.get(id=usuario_id)
+    except Usuario.DoesNotExist:
+        return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.user == usuario_obj:
+        return Response({'error': 'No puedes seguirte a ti mismo'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if request.user in usuario_obj.seguidores.all():
+        usuario_obj.seguidores.remove(request.user)
+        is_following = False
+    else:
+        usuario_obj.seguidores.add(request.user)
+        is_following = True
+
+    return Response({'is_following': is_following})

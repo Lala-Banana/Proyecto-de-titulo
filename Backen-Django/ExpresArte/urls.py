@@ -15,7 +15,9 @@ from .views import (
     ObrasPorUsuarioView,
     ObraContentTypeView,
     PhotoListCreateView,
-    toggle_me_gusta
+    toggle_me_gusta,
+    is_following_view, 
+    toggle_follow_view,
 
 )
 
@@ -90,6 +92,9 @@ urlpatterns = [
     #Me Gusta
     path('obras/<int:obra_id>/toggle-me-gusta/', toggle_me_gusta, name='toggle-me-gusta'),
 
+    #Seguidores
+    path('usuarios/<int:usuario_id>/is-following/', is_following_view, name='is-following'),
+    path('usuarios/<int:usuario_id>/toggle-follow/', toggle_follow_view, name='toggle-follow'),
 
 
 ]
