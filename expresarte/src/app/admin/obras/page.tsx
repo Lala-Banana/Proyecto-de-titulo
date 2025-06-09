@@ -229,7 +229,7 @@ export default function ObrasAdminPage() {
     setTitulo(obra.titulo);
     setDescripcion(obra.descripcion);
     setCategoriaId(obra.categoria);
-    setUsuarioId(obra.usuario?.id || null);
+    setUsuarioId(obra.usuario.id || null);
     setPrecio(obra.precio);
     setStock(obra.stock);
     setEnVenta(obra.en_venta);
@@ -252,7 +252,7 @@ export default function ObrasAdminPage() {
   };
 
   const irADetalle = (obraId: number) => {
-    router.push(`/publicacion/${obraId}`);
+    router.push(`/publicaciones/${obraId}`);
   };
 
   if (error) {
@@ -439,7 +439,12 @@ export default function ObrasAdminPage() {
               </td>
               <td className="p-3">{obra.titulo}</td>
               <td className="p-3">
-                {obra.usuario ? `${obra.usuario.id} - ${obra.usuario.nombre}` : 'Sin usuario'}
+                {obra.usuario ? (
+                  <>
+                    <span className="font-semibold">ID:</span> {obra.usuario.id}<br />
+                    <span className="font-semibold">Nombre:</span> {obra.usuario.nombre}
+                  </>
+                ) : 'Sin usuario'}
               </td>
               <td className="p-3">${obra.precio}</td>
               <td className="p-3">{obra.stock}</td>

@@ -7,7 +7,7 @@ import Footer from '@/app/components/Footer';
 
 export default function UsuarioPerfilPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
+    <div className="min-h-screen flex flex-col bg-gray-100 text-gray-900">
       <NavbarCombined />
 
       <main className="flex-grow">

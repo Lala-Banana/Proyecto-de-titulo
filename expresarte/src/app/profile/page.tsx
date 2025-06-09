@@ -25,7 +25,11 @@ export default function ProfilePage() {
 
         if (!res.ok) throw new Error('Error al obtener obras');
         const obrasData = await res.json();
-        setObras(obrasData);
+        const obrasWithPrecioNumber = obrasData.map((obra: any) => ({
+          ...obra,
+          precio: typeof obra.precio === 'string' ? Number(obra.precio) : obra.precio,
+        }));
+        setObras(obrasWithPrecioNumber);
       } catch (err) {
         console.error('❌ Error al cargar obras', err);
       }
@@ -41,7 +45,7 @@ export default function ProfilePage() {
   const obrasNoVenta = obras.filter((obra) => !obra.en_venta);
 
   return (
-    <div className="bg-gray-50 text-gray-900">
+    <div className="bg-gray-10 text-gray-900">
       <NavbarCombined />
 
       <div className="relative min-h-screen">
@@ -65,6 +69,7 @@ export default function ProfilePage() {
             obrasNoVenta={obrasNoVenta}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
+            setObras={setObras} // ← para actualizar lista tras eliminar
           />
         </div>
       </div>

@@ -67,21 +67,13 @@ const Navbar = () => {
           <Link href="/categorias" className="hover:underline text-sm">
             Categorías
           </Link>
-          <Link href="/obras" className="hover:underline text-sm">
+          <Link href="/publicaciones" className="hover:underline text-sm">
             Publicaciones
           </Link>
           <Link href="/usuarios" className="hover:underline text-sm">
             Usuarios
           </Link>
-          <form onSubmit={handleSearchSubmit}>
-            <input
-              type="text"
-              placeholder="Buscar..."
-              className="px-2 py-1 rounded border text-sm text-black"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </form>
+          
         </div>
 
         {/* usuario / login */}
@@ -152,7 +144,7 @@ const Navbar = () => {
                       Categorías
                     </Link>
                     <Link
-                      href="/obras"
+                      href="/publicaciones"
                       onClick={() => setDropdownOpen(false)}
                       className="block px-2 py-1 hover:bg-gray-100 rounded text-sm"
                     >

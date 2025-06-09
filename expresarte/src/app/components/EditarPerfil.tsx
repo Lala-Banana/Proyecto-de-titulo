@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSession } from 'next-auth/react';
+import NavbarCombined from '../components/Navbar';
 
 interface User {
   nombre: string;
@@ -138,8 +139,9 @@ export default function EditarPerfil() {
   if (loading) return <p className="text-center py-8">Cargando perfil...</p>;
 
   return (
-    <div className="max-w mx-auto p-8 bg-white ">
-      <h1 className="text-2xl font-bold mb-6">Editar perfil</h1>
+    <div className="max-w mx-auto p-8 bg-gray-100 ">
+      <NavbarCombined />
+
       <form onSubmit={handleSubmit} className="space-y-6">
 
         {/* FOTO DE PERFIL */}

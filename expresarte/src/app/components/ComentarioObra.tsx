@@ -75,12 +75,12 @@ export default function ComentariosObra({ obraId }: Props) {
 
   return (
     <div className="bg-white p-4 rounded shadow mt-4">
-      <h3 className="text-lg font-bold mb-2">Comentarios</h3>
+      <h3 className="text-lg  text-black font-bold mb-2">Comentarios</h3>
 
       {/* Formulario */}
       <form onSubmit={handleSubmit} className="mb-4">
         <textarea
-          className="w-full border p-2 rounded mb-2"
+          className="w-full border p-2 rounded mb-2 text-gray-800"
           value={nuevoComentario}
           onChange={(e) => setNuevoComentario(e.target.value)}
           placeholder="Escribe un comentario..."
@@ -88,7 +88,7 @@ export default function ComentariosObra({ obraId }: Props) {
         />
         <button
           type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="bg-blue-500 text-gray-2000 px-4 py-2 rounded hover:bg-blue-600"
         >
           Enviar comentario
         </button>

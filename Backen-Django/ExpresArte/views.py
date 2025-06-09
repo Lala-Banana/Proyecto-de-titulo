@@ -17,7 +17,9 @@ from rest_framework.permissions import AllowAny, IsAdminUser  # Agregado IsAdmin
 from .serializers import UsuarioPublicoSerializer
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.exceptions import NotFound
 from django.db import connection
+from django.core.exceptions import PermissionDenied
 
 
 # Función auxiliar para obtener los tokens
@@ -150,7 +152,12 @@ class ObraListCreateView(generics.ListCreateAPIView):
 class ObraDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Obra.objects.all()
     serializer_class = ObraSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
+
+    def perform_destroy(self, instance):
+        if instance.usuario != self.request.user:
+            raise PermissionDenied("No tienes permiso para eliminar esta obra.")
+        instance.delete()
 
 class CompraListCreateView(generics.ListCreateAPIView):
     queryset = Compra.objects.all()
@@ -203,11 +210,14 @@ class ObrasPorCategoriaView(generics.ListAPIView):
 
     def get_queryset(self):
         categoria_slug = self.kwargs['slug']
-        queryset = Obra.objects.filter(categoria__slug=categoria_slug, activo=True)
-        usuario_id = self.request.query_params.get('usuario_id')
-        if usuario_id:
-            queryset = queryset.filter(usuario__id=usuario_id)
-        return queryset
+
+        try:
+            categoria = Categoria.objects.get(slug=categoria_slug)
+        except Categoria.DoesNotExist:
+            raise NotFound(f"No se encontró la categoría con slug '{categoria_slug}'")
+
+        # Solo devolver obras activas que pertenezcan exactamente a esa categoría
+        return Obra.objects.filter(categoria=categoria, activo=True)
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])

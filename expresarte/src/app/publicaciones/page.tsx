@@ -58,9 +58,9 @@ export default function ObrasPage() {
       <NavbarCombined />
       <main className="flex flex-col lg:flex-row pt-24 pb-16 min-h-screen bg-white">
         {/* Sidebar que queda arriba en móvil y a la izquierda en pantallas ≥ lg */}
-        <div className="w-full lg:w-64 px-4">
-          <SidebarFiltros onAplicar={aplicarFiltro} />
-        </div>
+          <div className="w-full lg:w-64 px-4">
+                    <SidebarFiltros onAplicar={aplicarFiltro} />
+                  </div>
 
         {/* Contenido de obras: ocupa todo el ancho en móvil, y el resto en pantallas ≥ lg */}
         <section className="flex-1 px-4 mt-6 lg:mt-0">
@@ -74,7 +74,13 @@ export default function ObrasPage() {
           ) : obrasFiltradas.length === 0 ? (
             <p className="text-center text-gray-500 mt-10">No hay obras en esta categoría.</p>
           ) : (
-            <ObrasGrid obras={obrasFiltradas} slug="todas" />
+            <ObrasGrid
+              obras={obrasFiltradas.map((obra) => ({
+                ...obra,
+                precio: Number(obra.precio),
+              }))}
+              slug="todas"
+            />
           )}
         </section>
       </main>

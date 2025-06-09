@@ -11,6 +11,7 @@ interface UsuarioPublico {
   telefono?: string | null;
   foto_url: string | null;
   ubicacion?: string;
+  tipo_usuario: string;
 }
 
 export default function UsuariosPublicos() {

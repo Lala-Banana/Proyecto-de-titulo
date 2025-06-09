@@ -188,10 +188,10 @@ export default function PublicacionPage() {
 
   // —————————————— UI ——————————————
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-gray-100">
       <NavbarCombined />
 
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main className="flex-grow container mx-auto px-4 py-16 ">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* ✅ Galería principal */}
           <section className="lg:col-span-2 space-y-6">
@@ -201,7 +201,7 @@ export default function PublicacionPage() {
           {/* Sidebar */}
           <aside className="space-y-2">
             <div className="bg-white p-4 rounded-xl shadow-lg space-y-4">
-              <h1 className="text-2xl font-bold">{obra.titulo}</h1>
+              <h1 className="text-2xl text-black font-bold">{obra.titulo}</h1>
               <p className="text-gray-700">{obra.descripcion}</p>
               <p className="text-sm text-gray-600">Stock disponible: {obra.stock}</p>
 
@@ -220,7 +220,7 @@ export default function PublicacionPage() {
               {/* Precio y botón */}
               {obra.en_venta ? (
                 <>
-                  <p className="text-3xl font-semibold text-green-600">
+                  <p className="text-3xl font-semibold text-gray-900">
                     ${Number(obra.precio).toLocaleString('es-CL')}
                   </p>
                   <button
@@ -231,7 +231,7 @@ export default function PublicacionPage() {
                   </button>
                 </>
               ) : (
-                <span className="inline-block px-3 py-1 bg-gray-200 rounded-full text-gray-600">
+                <span className="inline-block px-3 py-2 bg-gray-200 rounded-full text-gray-600">
                   No en venta
                 </span>
               )}
@@ -300,7 +300,7 @@ export default function PublicacionPage() {
 
             <button
               onClick={() => router.back()}
-              className="w-full text-center py-2 rounded border border-gray-300 hover:bg-gray-100 transition"
+              className="w-full text-center text-black py-2 rounded border border-gray-300 hover:bg-gray-100 transition"
             >
               ← Volver
             </button>
@@ -315,7 +315,7 @@ export default function PublicacionPage() {
               {otherObras.map((o) => (
                 <Link
                   key={o.id}
-                  href={`/publicacion/${o.id}`}
+                  href={`/publicaciones/${o.id}`}
                   className="block group overflow-hidden rounded-lg bg-white transition-shadow shadow-sm hover:shadow-lg"
                 >
                   {o.imagen_url ? (
