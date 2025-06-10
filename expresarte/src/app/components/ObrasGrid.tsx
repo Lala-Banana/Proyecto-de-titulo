@@ -1,16 +1,16 @@
-// components/ObrasGrid.tsx
 'use client';
 
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 import Image from 'next/image';
+import { X } from 'lucide-react';
 
 export interface Obra {
   id: number;
   titulo: string;
   descripcion: string;
   imagen_url: string | null;
-  precio: number;
+  precio: number | string;  // puede venir como string o número
   en_venta: boolean;
 }
 
@@ -18,16 +18,20 @@ interface Props {
   obras: Obra[];
   slug: string;
   columnas?: number; // por defecto 4
+  onDelete?: (id: number) => void; // callback para eliminar obra
+  currentUserId?: number;
+  token?: string;
 }
 
-export default function ObrasGrid({ obras, slug, columnas = 4 }: Props) {
+export default function ObrasGrid({ obras, slug, columnas = 4, onDelete, currentUserId, token }: Props) {
   const router = useRouter();
 
   const handleClickObra = useCallback(
     (obraId: number) => {
-      router.push(`/publicaciones/${obraId}`);
+      // Navega a la ruta usando el slug como base
+      router.push(`/${slug}/${obraId}`);
     },
-    [router]
+    [router, slug]
   );
 
   if (!obras || obras.length === 0) {
@@ -67,6 +71,20 @@ export default function ObrasGrid({ obras, slug, columnas = 4 }: Props) {
             <div className="absolute top-1 left-1 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
               ${Number(obra.precio).toLocaleString('es-CL')}
             </div>
+          )}
+
+          {/* Botón para eliminar obra */}
+          {onDelete && (
+            <button
+              type="button"
+              className="absolute top-1 right-1 bg-red-500 bg-opacity-80 text-white rounded-full p-1 hover:bg-red-600 transition"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(obra.id);
+              }}
+            >
+              <X size={16} />
+            </button>
           )}
         </div>
       ))}

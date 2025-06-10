@@ -17,7 +17,7 @@ export default function LoginForm() {
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
-
+    
     try {
       const response = await fetch('http://localhost:8000/api/login/', {
         method: 'POST',

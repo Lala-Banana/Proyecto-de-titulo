@@ -1,55 +1,59 @@
+// components/SidebarFiltros.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 
-interface Categoria {
+export interface Categoria {
   id: number;
   nombre: string;
+  slug: string;          // <-- ahora también usamos el slug
 }
 
 interface Props {
-  onAplicar: (categoriaId: number | null) => void;
+  /** Recibirá el slug de la categoría (o null para “Todas”) */
+  onAplicar: (categoriaSlug: string | null) => void;
 }
 
 export default function SidebarFiltros({ onAplicar }: Props) {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [categoriaId, setCategoriaId] = useState<number | null>(null);
+  const [categoriaSlug, setCategoriaSlug] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
         const res = await fetch('http://localhost:8000/api/categorias/');
-        if (!res.ok) throw new Error('Error al cargar categorías');
+        if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
         const data: Categoria[] = await res.json();
         setCategorias(data);
-      } catch (error) {
-        console.error('❌ Error al cargar categorías:', error);
+      } catch (err) {
+        console.error('❌ Error al cargar categorías:', err);
       }
     };
     fetchCategorias();
   }, []);
 
   const handleAplicar = () => {
-    onAplicar(categoriaId);
+    console.log('[Sidebar] Aplicando slug=', categoriaSlug);
+    onAplicar(categoriaSlug);
   };
 
   return (
     <>
-      {/* MÓVIL/TABLET: solo el dropdown (select + botón) */}
+      {/* ==== VERSIÓN MÓVIL/TABLET ==== */}
       <div className="lg:hidden px-4 py-4 bg-gray-50">
         <h2 className="text-lg font-semibold mb-2 text-black">Filtrar</h2>
         <label className="block font-medium mb-1 text-black">Categoría</label>
         <select
           className="w-full border rounded text-black p-2 mb-3"
-          value={categoriaId ?? ''}
+          value={categoriaSlug ?? ''}
           onChange={(e) => {
-            const value = e.target.value;
-            setCategoriaId(value ? parseInt(value) : null);
+            const val = e.target.value;
+            setCategoriaSlug(val || null);
           }}
         >
           <option value="">Todas</option>
           {categorias.map((cat) => (
-            <option key={cat.id} value={cat.id}>
+            <option key={cat.id} value={cat.slug}>
               {cat.nombre}
             </option>
           ))}
@@ -62,22 +66,22 @@ export default function SidebarFiltros({ onAplicar }: Props) {
         </button>
       </div>
 
-      {/* ESCRITORIO: sidebar completo */}
+      {/* ==== VERSIÓN ESCRITORIO ==== */}
       <aside className="hidden lg:block w-64 px-4 border-r border-gray-300 sticky top-24 h-[calc(100vh-6rem)] overflow-y-auto bg-white">
         <h2 className="text-xl font-semibold mb-4 text-black">Categorías</h2>
         <div className="mb-4">
           <label className="block font-medium mb-1 text-black">Categoría</label>
           <select
             className="w-full border rounded text-black p-2 mb-3"
-            value={categoriaId ?? ''}
+            value={categoriaSlug ?? ''}
             onChange={(e) => {
-              const value = e.target.value;
-              setCategoriaId(value ? parseInt(value) : null);
+              const val = e.target.value;
+              setCategoriaSlug(val || null);
             }}
           >
             <option value="">Todas</option>
             {categorias.map((cat) => (
-              <option key={cat.id} value={cat.id}>
+              <option key={cat.id} value={cat.slug}>
                 {cat.nombre}
               </option>
             ))}
@@ -85,7 +89,7 @@ export default function SidebarFiltros({ onAplicar }: Props) {
         </div>
         <button
           onClick={handleAplicar}
-          className=" text-white w-full py-2 rounded"
+          className="bg-black text-white w-full py-2 rounded"
         >
           Aplicar
         </button>

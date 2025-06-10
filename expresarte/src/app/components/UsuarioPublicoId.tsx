@@ -17,7 +17,7 @@ interface Obra {
 interface User {
   id: number;
   nombre: string;
-  foto_url: string;
+  foto_url: string | 'https://us.123rf.com/450wm/tuktukdesign/tuktukdesign1608/tuktukdesign160800036/61010819-icono-de-usuario-hombre-perfil-hombre-de-negocios-avatar-ilustraci%C3%B3n-vectorial-persona-glifo.jpg?ver=6';
   descripcion: string;
   seguidores_count?: number;
   region?: string;

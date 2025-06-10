@@ -153,7 +153,13 @@ class ObraDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Obra.objects.all()
     serializer_class = ObraSerializer
     permission_classes = [IsAuthenticated]
-
+    
+    def destroy(self, request, *args, **kwargs):
+        obra = self.get_object()
+        if obra.usuario.id != request.user.id:
+            return Response({'detail':'No autorizado'}, status=403)
+        return super().destroy(request, *args, **kwargs)
+    
     def perform_destroy(self, instance):
         if instance.usuario != self.request.user:
             raise PermissionDenied("No tienes permiso para eliminar esta obra.")

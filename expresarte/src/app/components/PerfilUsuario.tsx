@@ -37,6 +37,7 @@ interface Props {
   obrasNoVenta: Obra[];
   activeTab: 'venta' | 'noVenta';
   setActiveTab: (tab: 'venta' | 'noVenta') => void;
+  onDelete?: (id: number) => void;
   isOwner?: boolean;
 }
 
@@ -47,6 +48,7 @@ export default function PerfilUsuario({
   obrasNoVenta,
   activeTab,
   setActiveTab,
+  onDelete,
   isOwner = true,
 }: Props) {
   const router = useRouter();
@@ -270,6 +272,11 @@ export default function PerfilUsuario({
             <ObrasGrid
               obras={obrasMostradas}
               slug={user.nombre.toLowerCase().replace(/\s+/g, '-')}
+              currentUserId={user.id}
+              token={token}
+              onDelete={() => {
+                // Puedes implementar la lógica de borrado aquí o dejarlo vacío si no aplica
+              }}
             />
           ) : (
             <p className="text-center text-gray-600 text-lg mt-20">

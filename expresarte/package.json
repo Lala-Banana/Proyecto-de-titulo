@@ -13,6 +13,7 @@
     "@heroui/react": "^2.7.6",
     "axios": "^1.9.0",
     "dotenv": "^16.5.0",
+    "lucide-react": "^0.513.0",
     "next": "15.3.0",
     "next-auth": "^4.24.11",
     "paquete": "^1.0.0",

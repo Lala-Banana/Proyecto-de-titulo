@@ -13,7 +13,7 @@ export default function RegisterForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
-
+  const DEFAULT_FONDO = 'https://images.unsplash.com/photo-1415889455891-23bbf19ee5c7?q=80&w=1476&auto=format&fit=crop';
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -61,13 +61,21 @@ export default function RegisterForm() {
         email: user.email,
         nombre: user.name || '',
         foto_url: user.image || '',
+        fondo: DEFAULT_FONDO,
+        
       }),
     });
 
     const tokenRes = await fetch('http://localhost:8000/api/token_google/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: user.email }),
+      body: JSON.stringify({ 
+        email: user.email, 
+        fondo: DEFAULT_FONDO,
+       }),
+
+              
+
     });
 
     const tokenData = await tokenRes.json();

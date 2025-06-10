@@ -9,7 +9,7 @@ interface UsuarioPublico {
   nombre: string;
   email: string;
   telefono?: string | null;
-  foto_url: string | null;
+  foto_url: string | 'https://us.123rf.com/450wm/tuktukdesign/tuktukdesign1608/tuktukdesign160800036/61010819-icono-de-usuario-hombre-perfil-hombre-de-negocios-avatar-ilustraci%C3%B3n-vectorial-persona-glifo.jpg?ver=6';
   ubicacion?: string;
   tipo_usuario: string;
 }
@@ -57,7 +57,7 @@ export default function UsuariosPublicos() {
           >
             <div className="w-16 h-16 sm:w-20 sm:h-20 mb-4 flex-shrink-0">
               <Image
-                src={u.foto_url || '/default-avatar.png'}
+                src={u.foto_url || 'https://us.123rf.com/450wm/tuktukdesign/tuktukdesign1608/tuktukdesign160800036/61010819-icono-de-usuario-hombre-perfil-hombre-de-negocios-avatar-ilustraci%C3%B3n-vectorial-persona-glifo.jpg?ver=6'}
                 alt={u.nombre}
                 width={80}
                 height={80}
