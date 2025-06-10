@@ -39,7 +39,7 @@ const CategoriasGrid: React.FC<Props> = ({
   }, []);
 
   const handleClick = (slug: string) => {
-    router.push(`/categorias/${slug}`);
+    router.push(`/categoria/${slug}`);
   };
 
   // Si paso `limite`, corto la lista; si no, muestro todas
