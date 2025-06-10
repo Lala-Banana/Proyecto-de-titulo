@@ -152,7 +152,7 @@ class ObraListCreateView(generics.ListCreateAPIView):
 class ObraDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Obra.objects.all()
     serializer_class = ObraSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def perform_destroy(self, instance):
         if instance.usuario != self.request.user:

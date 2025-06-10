@@ -141,6 +141,7 @@ class UsuarioPublicoSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'nombre',
+            'email',
             'rut',
             'tipo_usuario',
             'descripcion',

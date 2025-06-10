@@ -14,7 +14,7 @@ interface Usuario {
   email: string;
   telefono?: string | null;
   rut: string;
-  ubicacion: string;
+  region: string;
   descripcion: string;
   foto_url?: string;
 }
@@ -261,10 +261,7 @@ export default function PublicacionPage() {
                 </div>
                 <ul className="space-y-2 text-gray-700 text-sm">
                   <li>
-                    <strong>RUT:</strong> {usuario.rut}
-                  </li>
-                  <li>
-                    <strong>Ubicación:</strong> {usuario.ubicacion}
+                    <strong>Region:</strong> {usuario.region}
                   </li>
                   {usuario.telefono && (
                     <li>
