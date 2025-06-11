@@ -41,10 +41,10 @@ body {
 .text-glitch {
   transition: all 0.5s;
   -webkit-text-stroke: 1px #e0e0e0;
-  font-variation-settings: "wght" 500, "ital" 1;
+  font-variation-settings: "wght" 200, "ital" 1;
   font-size: 6rem;
   text-align: center;
-  color: #d9d9d9; /* ¡ya no transparente! */
+  color: #d9d9d9;
   font-family: "Meta", sans-serif;
   text-shadow:
     2px 2px 0px #2a2a2a,
@@ -59,4 +59,12 @@ body {
   font-variation-settings: "wght" 100, "ital" 0;
   text-shadow: none;
   color: #aaaaaa;
+}
+
+/* Responsivo en móviles: ajusta tamaño sin perder animación */
+@media (max-width: 640px) {
+  .text-glitch {
+    font-size: 2.5rem !important;
+    font-variation-settings: "wght" 200, "ital" 1;
+  }
 }
