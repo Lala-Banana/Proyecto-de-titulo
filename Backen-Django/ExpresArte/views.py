@@ -259,17 +259,17 @@ class ObraListView(generics.ListAPIView):
 
         return queryset
 
-def get_queryset(self):
-    queryset = Obra.objects.all()
-    categoria_id = self.request.query_params.get('categoria_id')
-    precio_max = self.request.query_params.get('precio_max')
+    def get_queryset(self):
+        queryset = Obra.objects.all()
+        categoria_id = self.request.query_params.get('categoria_id')
+        precio_max = self.request.query_params.get('precio_max')
 
-    if categoria_id:
-        queryset = queryset.filter(categoria_id=categoria_id)
-    if precio_max:
-        queryset = queryset.filter(precio__lte=precio_max)
+        if categoria_id:
+            queryset = queryset.filter(categoria_id=categoria_id)
+        if precio_max:
+            queryset = queryset.filter(precio__lte=precio_max)
 
-    return queryset
+        return queryset
 
 # ADMIN con permisos corregidos
 class CategoriaAdminListView(generics.ListCreateAPIView):
