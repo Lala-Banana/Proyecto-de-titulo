@@ -77,6 +77,27 @@ export default function ComentariosObra({ obraId }: Props) {
     <div className="bg-white p-4 rounded shadow mt-4">
       <h3 className="text-lg  text-black font-bold mb-2">Comentarios</h3>
 
+
+      {/* Lista de comentarios */}
+      <div className="space-y-4">
+        {comentarios.map((comentario) => (
+          <div key={comentario.id} className="flex items-start space-x-3">
+            <img
+              src={comentario.usuario.foto_url || '/default-avatar.png'}
+              alt={comentario.usuario.nombre}
+              className="w-10 h-10 rounded-full object-cover "
+            />
+            <div>
+              <p className=" text-black font-semibold">{comentario.usuario.nombre}</p>
+              <p className="mt-1 text-gray-900">{comentario.contenido}</p>
+              <p className="text-sm text-gray-400">{new Date(comentario.fecha).toLocaleString()}</p>
+              
+            </div>
+          </div>
+        ))}
+      </div>
+
+      
       {/* Formulario */}
       <form onSubmit={handleSubmit} className="mb-4">
         <textarea
@@ -94,23 +115,7 @@ export default function ComentariosObra({ obraId }: Props) {
         </button>
       </form>
 
-      {/* Lista de comentarios */}
-      <div className="space-y-4">
-        {comentarios.map((comentario) => (
-          <div key={comentario.id} className="flex items-start space-x-3">
-            <img
-              src={comentario.usuario.foto_url || '/default-avatar.png'}
-              alt={comentario.usuario.nombre}
-              className="w-10 h-10 rounded-full object-cover"
-            />
-            <div>
-              <p className="font-semibold">{comentario.usuario.nombre}</p>
-              <p className="text-sm text-gray-600">{new Date(comentario.fecha).toLocaleString()}</p>
-              <p className="mt-1">{comentario.contenido}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      
     </div>
   );
 }

@@ -13,7 +13,7 @@ export default function ProfilePage() {
   const [obras, setObras] = useState<Obra[]>([]);
   const [activeTab, setActiveTab] = useState<'venta' | 'noVenta'>('venta');
   const router = useRouter();
-
+  const fondo = 'https://images.unsplash.com/photo-1415889455891-23bbf19ee5c7?q=80&w=1476&auto=format&fit=crop';
   useEffect(() => {
     const fetchObras = async () => {
       if (!user || !token) return;
@@ -45,7 +45,7 @@ export default function ProfilePage() {
   const obrasNoVenta = obras.filter((obra) => !obra.en_venta);
 
   return (
-    <div className="bg-gray-10 text-gray-900">
+    <div className=" text-gray-900">
       <NavbarCombined />
 
       <div className="relative min-h-screen">

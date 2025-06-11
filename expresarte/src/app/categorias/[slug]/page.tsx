@@ -11,7 +11,7 @@ interface Obra {
   titulo: string;
   descripcion: string;
   imagen_url: string;
-  precio: string;
+  precio: number;
   en_venta: boolean;
   // ojo: aquí no tipamos categoria_* porque puede variar; usamos any al parsear
 }

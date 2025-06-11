@@ -201,9 +201,9 @@ export default function PublicacionPage() {
           {/* Sidebar */}
           <aside className="space-y-2">
             <div className="bg-white p-4 rounded-xl shadow-lg space-y-4">
-              <h1 className="text-2xl text-black font-bold">{obra.titulo}</h1>
-              <p className="text-gray-700">{obra.descripcion}</p>
-              <p className="text-sm text-gray-600">Stock disponible: {obra.stock}</p>
+              <h1 className=" text-4xl text-black font-bold">{obra.titulo}</h1>
+              <p className=" text-3xl text-gray-900">{obra.descripcion}</p>
+              <p className="text-2xl text-gray-900">Stock disponible: {obra.stock}</p>
 
               {/* ❤️ Me gusta */}
               <div className="flex items-center space-x-2 mt-2">
@@ -214,7 +214,7 @@ export default function PublicacionPage() {
                 >
                   {likedByUser ? '❤️' : '🤍'}
                 </button>
-                <span className="text-sm text-gray-600">{likesCount} Me gusta</span>
+                <span className="text-1xl text-gray-600">{likesCount} Me gusta</span>
               </div>
 
               {/* Precio y botón */}
@@ -240,7 +240,7 @@ export default function PublicacionPage() {
             {/* Artista */}
             {usuario && (
               <div className="bg-white p-6 rounded-xl shadow-lg space-y-4">
-                <h2 className="text-xl font-semibold mb-2">Artista</h2>
+                <h2 className="text-2xl text-black font-semibold mb-2">Artista</h2>
                 <div className="flex items-center space-x-4 mb-4">
                   <Image
                     src={usuario.foto_url || '/default-avatar.png'}
@@ -252,7 +252,7 @@ export default function PublicacionPage() {
                   <div>
                     <Link
                       href={`/usuarios/${usuario.id}`}
-                      className="text-lg font-medium text-blue-600 hover:underline"
+                      className="text-lg font-medium text-gray-900 hover:underline"
                     >
                       {usuario.nombre}
                     </Link>
@@ -276,7 +276,7 @@ export default function PublicacionPage() {
                   {usuario.email && (
                     <a
                       href={`mailto:${usuario.email}`}
-                      className="w-full text-center bg-green-500 text-white py-2 rounded hover:bg-green-600 transition text-sm"
+                      className="w-full text-center bg-blue-500 text-white py-2 rounded hover:bg-green-600 transition text-sm"
                     >
                       Enviar correo
                     </a>
@@ -297,7 +297,7 @@ export default function PublicacionPage() {
 
             <button
               onClick={() => router.back()}
-              className="w-full text-center text-black py-2 rounded border border-gray-300 hover:bg-gray-100 transition"
+              className="w-full text-center text-black py-2 rounded border border-gray-300 hover:bg-gray-300 transition"
             >
               ← Volver
             </button>

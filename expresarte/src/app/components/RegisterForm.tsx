@@ -13,7 +13,7 @@ export default function RegisterForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
-
+  const fotodefault = 'https://us.123rf.com/450wm/tuktukdesign/tuktukdesign1608/tuktukdesign160800036/61010819-icono-de-usuario-hombre-perfil-hombre-de-negocios-avatar-ilustraci%C3%B3n-vectorial-persona-glifo.jpg?ver=6';
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -25,7 +25,12 @@ export default function RegisterForm() {
     const response = await fetch('http://localhost:8000/api/register/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, email: correo, password }),
+      body: JSON.stringify({ 
+        nombre, 
+        email: correo, 
+        password,
+        foto_url: fotodefault}),
+        
     });
 
     if (!response.ok) {

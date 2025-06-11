@@ -57,7 +57,7 @@ export default function HomePage() {
       {/* Mostramos solo 4 categorías */}
       <Categorias
         columnas={4}
-        limite={4}
+        limite={8}
         titulo="CATEGORÍAS DESTACADAS"
       />
 

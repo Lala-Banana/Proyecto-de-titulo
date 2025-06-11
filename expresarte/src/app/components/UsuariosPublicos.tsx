@@ -46,8 +46,10 @@ export default function UsuariosPublicos() {
   if (usuarios.length === 0) return <p className="text-center mt-10">No hay usuarios públicos.</p>;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h2 className="text-2xl font-bold mb-6 text-center">Usuarios Públicos</h2>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-30">
+      <h1 className="text-4xl font-serif italic font-bold tracking-wider text-center text-black mb-10">
+            USUARIOS DISPONIBLES
+          </h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {usuarios.map(u => (
           <div
@@ -57,7 +59,7 @@ export default function UsuariosPublicos() {
           >
             <div className="w-16 h-16 sm:w-20 sm:h-20 mb-4 flex-shrink-0">
               <Image
-                src={u.foto_url || '/default-avatar.png'}
+                src={u.foto_url || 'https://us.123rf.com/450wm/tuktukdesign/tuktukdesign1608/tuktukdesign160800036/61010819-icono-de-usuario-hombre-perfil-hombre-de-negocios-avatar-ilustraci%C3%B3n-vectorial-persona-glifo.jpg?ver=6'}
                 alt={u.nombre}
                 width={80}
                 height={80}

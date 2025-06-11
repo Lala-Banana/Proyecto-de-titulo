@@ -24,7 +24,7 @@ interface User {
   seguidores?: number;
   me_gusta?: number;
   region?: string;
-  fondo?: string;
+  fondo?: string ;
   rut?: string;
   tipo_usuario?: 'comprador' | 'artista';
   seguidores_count?: number;
