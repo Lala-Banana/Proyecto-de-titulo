@@ -10,10 +10,11 @@ interface Obra {
   id: number;
   titulo: string;
   descripcion: string;
-  imagen_url: string;
+  imagen_url: string | null;
   precio: number;
   en_venta: boolean;
   me_gusta?: number[];
+  esPropia?: boolean;
 }
 
 interface User {
@@ -52,11 +53,12 @@ export default function PerfilUsuario({
   const router = useRouter();
   const [user, setUser] = useState<User>(userProp);
   const [mostrarFormObra, setMostrarFormObra] = useState(false);
+  const [obraSeleccionada, setObraSeleccionada] = useState<Obra | null>(null);
   const [cantidadVisible, setCantidadVisible] = useState<number>(() => obrasEnVenta.length);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [totalLikes, setTotalLikes] = useState<number>(0);
-  const [isFollowing, setIsFollowing] = useState<boolean>(false); // 🚀 para botón Seguir
+  const [isFollowing, setIsFollowing] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -79,29 +81,23 @@ export default function PerfilUsuario({
     fetchUser();
   }, [token, isOwner]);
 
-  // 🚀 Calcular totalLikes
   useEffect(() => {
     const sumarLikes = () => {
       const todasLasObras = [...obrasEnVenta, ...obrasNoVenta];
-
       const total = todasLasObras.reduce((acc, obra) => {
         const likes = Array.isArray(obra.me_gusta) ? obra.me_gusta.length : 0;
         return acc + likes;
       }, 0);
-
       setTotalLikes(total);
     };
-
     sumarLikes();
   }, [obrasEnVenta, obrasNoVenta]);
 
   useEffect(() => {
-  const nuevasObras = activeTab === 'venta' ? obrasEnVenta : obrasNoVenta;
-  setCantidadVisible(nuevasObras.length);
-}, [activeTab, obrasEnVenta, obrasNoVenta]);
+    const nuevasObras = activeTab === 'venta' ? obrasEnVenta : obrasNoVenta;
+    setCantidadVisible(nuevasObras.length);
+  }, [activeTab, obrasEnVenta, obrasNoVenta]);
 
-
-  // 🚀 Verificar si sigo al usuario
   useEffect(() => {
     const checkIfFollowing = async () => {
       if (!token || isOwner) return;
@@ -117,11 +113,9 @@ export default function PerfilUsuario({
         console.error('Error checking following:', err);
       }
     };
-
     checkIfFollowing();
   }, [token, user.id, isOwner]);
 
-  // 🚀 Toggle seguir/dejar de seguir
   const handleToggleSeguir = async () => {
     if (!token || isOwner) return;
     try {
@@ -135,10 +129,7 @@ export default function PerfilUsuario({
       if (res.ok) {
         const data = await res.json();
         const nuevoIsFollowing = data.is_following;
-
         setIsFollowing(nuevoIsFollowing);
-
-        // 🚀 ACTUALIZAR seguidores_count dinámicamente
         setUser((prevUser) => ({
           ...prevUser,
           seguidores_count:
@@ -150,8 +141,16 @@ export default function PerfilUsuario({
     }
   };
 
+  const handleEditarObra = (obra: Obra) => {
+    setObraSeleccionada(obra);
+  };
+
   const allObras = activeTab === 'venta' ? obrasEnVenta : obrasNoVenta;
   const obrasMostradas = allObras.slice(0, cantidadVisible);
+  const obrasConPropiedad = obrasMostradas.map((obra) => ({
+    ...obra,
+    esPropia: isOwner,
+  }));
 
   const reiniciarScrollYCantidad = (nuevoTab: 'venta' | 'noVenta') => {
     setActiveTab(nuevoTab);
@@ -163,7 +162,6 @@ export default function PerfilUsuario({
 
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full overflow-hidden">
-      {/* Perfil */}
       <div className="w-full lg:w-[320px] p-6 border-b lg:border-b-0 lg:sticky lg:top-[80px] z-20 bg-white/20 backdrop-blur-sm">
         <div className="flex flex-col items-center">
           <Image
@@ -213,7 +211,6 @@ export default function PerfilUsuario({
             </div>
           )}
 
-          {/* 🚀 Botón seguir / dejar de seguir */}
           {!isOwner && (
             <div className="flex justify-center w-full mb-4">
               <button
@@ -225,14 +222,11 @@ export default function PerfilUsuario({
             </div>
           )}
 
-          {/* 🚀 Grid de datos */}
           <div className="grid grid-cols-2 gap-3 w-full">
-            {[
-              { label: 'En venta', count: obrasEnVenta.length },
+            {[{ label: 'En venta', count: obrasEnVenta.length },
               { label: 'No en venta', count: obrasNoVenta.length },
               { label: 'Seguidores', count: user.seguidores_count ?? 0 },
-              { label: 'Me gusta', count: totalLikes },
-            ].map((item, i) => (
+              { label: 'Me gusta', count: totalLikes }].map((item, i) => (
               <div
                 key={i}
                 className="w-full bg-gray-100 rounded-xl text-black shadow text-center"
@@ -245,7 +239,6 @@ export default function PerfilUsuario({
         </div>
       </div>
 
-      {/* Obras */}
       <div className="flex-1 p-6 overflow-y-auto" ref={containerRef}>
         <div className="z-10 p-6 pb-2 border-black">
           <div className="mx-auto bg-white/20 border-black rounded-md overflow-hidden">
@@ -253,9 +246,7 @@ export default function PerfilUsuario({
               <button
                 key={tab}
                 className={`w-1/2 py-3 font-semibold text-sm ${
-                  activeTab === tab
-                    ? 'bg-black text-white'
-                    : 'bg-white text-black hover:bg-gray-100'
+                  activeTab === tab ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'
                 }`}
                 onClick={() => reiniciarScrollYCantidad(tab as 'venta' | 'noVenta')}
               >
@@ -268,14 +259,13 @@ export default function PerfilUsuario({
         <div className="px-6 pb-6 animate-fade-in">
           {obrasMostradas.length > 0 ? (
             <ObrasGrid
-              obras={obrasMostradas}
+              obras={obrasConPropiedad}
               slug={user.nombre.toLowerCase().replace(/\s+/g, '-')}
+              onEditar={handleEditarObra}
             />
           ) : (
             <p className="text-center text-gray-600 text-lg mt-20">
-              {activeTab === 'venta'
-                ? 'No hay Publicaciones en venta.'
-                : 'No hay Publicaciones fuera de venta.'}
+              {activeTab === 'venta' ? 'No hay Publicaciones en venta.' : 'No hay Publicaciones fuera de venta.'}
             </p>
           )}
         </div>
@@ -301,6 +291,36 @@ export default function PerfilUsuario({
             </div>
           </div>
         )}
+
+        {isOwner && obraSeleccionada && (
+          <>
+            {/* Fondo bloqueado y oscurecido */}
+            <div className="fixed inset-0 z-50 bg-white bg-opacity-90 flex items-center justify-center overflow-y-auto pt-[200px] pb-10">
+              <div className="relative bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-2xl mt-[80px] mb-10">
+                <CrearObraForm
+                  usuarioId={user.id}
+                  token={token}
+                  obraInicial={obraSeleccionada}
+                  onObraCreada={() => {
+                    setObraSeleccionada(null);
+                    setActiveTab('venta');
+                    setCantidadVisible(15);
+                  }}
+                />
+                <button
+                  className="mt-4 text-sm text-gray-600 underline"
+                  onClick={() => setObraSeleccionada(null)}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+
+            {/* Desactiva scroll de fondo mientras el modal esté abierto */}
+            <style>{`body { overflow: hidden !important; }`}</style>
+          </>
+        )}
+
       </div>
     </div>
   );

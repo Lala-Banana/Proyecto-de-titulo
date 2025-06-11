@@ -1,18 +1,31 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
 
 interface Categoria {
   id: number;
   nombre: string;
 }
 
+interface Obra {
+  id: number;
+  titulo: string;
+  descripcion: string;
+  imagen_url: string | null;
+  precio: number;
+  en_venta: boolean;
+  me_gusta?: number[];
+}
+
 interface Props {
   usuarioId: number;
   token: string;
   onObraCreada: () => void;
+  obraInicial?: Obra;
 }
 
-export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Props) {
+export default function CrearObraForm({ usuarioId, token, onObraCreada, obraInicial }: Props) {
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [precio, setPrecio] = useState('');
@@ -24,6 +37,18 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
   const [enVenta, setEnVenta] = useState(true);
   const [stock, setStock] = useState(1);
   const [imagenes, setImagenes] = useState<File[]>([]);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (obraInicial) {
+      setTitulo(obraInicial.titulo);
+      setDescripcion(obraInicial.descripcion);
+      setPrecio(String(obraInicial.precio));
+      setEnVenta(obraInicial.en_venta);
+      setStock(1);
+    }
+  }, [obraInicial]);
 
   useEffect(() => {
     const fetchCategorias = async () => {
@@ -46,7 +71,6 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
       try {
         const res = await fetch('http://localhost:8000/api/obra-content-type/');
         const data = await res.json();
-        console.log('✅ ContentType Obra:', data.content_type_id);
         setContentTypeObra(data.content_type_id);
       } catch (err) {
         console.error('Error al obtener content type de Obra:', err);
@@ -68,7 +92,6 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
     });
 
     const data = await res.json();
-
     if (!res.ok) {
       throw new Error(data.error?.message || 'Error al subir imagen');
     }
@@ -76,37 +99,47 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
     return data.secure_url;
   };
 
+  const handleDelete = async () => {
+    if (!obraInicial) return;
+    const confirm = window.confirm('¿Estás seguro de que deseas eliminar esta obra?');
+    if (!confirm) return;
+
+    try {
+      const res = await fetch(`http://localhost:8000/api/obras/${obraInicial.id}/`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error('Error al eliminar la obra');
+      onObraCreada();
+      window.location.reload();
+    } catch (err) {
+      console.error('❌ Error al eliminar obra:', err);
+      setError('No se pudo eliminar la obra.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Validación general
     if (!titulo || !descripcion || !categoriaId) {
       setError('Completa todos los campos requeridos.');
       return;
     }
 
-    // Validación precio / stock si es venta
-    if (enVenta) {
-      if (!precio || Number(precio) <= 0 || !stock || stock <= 0) {
-        setError('Completa precio y stock válidos.');
-        return;
-      }
-    }
-
-    // Validación imágenes
-    if (imagenes.length === 0) {
-      setError('Debes subir al menos una imagen.');
+    if (enVenta && (!precio || Number(precio) <= 0 || !stock || stock <= 0)) {
+      setError('Completa precio y stock válidos.');
       return;
     }
 
     try {
-      // Crear la obra primero
       const bodyObra = {
         titulo,
         descripcion,
         precio: enVenta ? precio : 0,
-        imagen_url: '',
+        imagen_url: obraInicial?.imagen_url || '',
         en_venta: enVenta,
         destacada: false,
         usuario: usuarioId,
@@ -114,8 +147,13 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
         stock: enVenta ? stock : 1,
       };
 
-      const resObra = await fetch('http://localhost:8000/api/obras/', {
-        method: 'POST',
+      const url = obraInicial
+        ? `http://localhost:8000/api/obras/${obraInicial.id}/`
+        : 'http://localhost:8000/api/obras/';
+      const method = obraInicial ? 'PUT' : 'POST';
+
+      const resObra = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -124,59 +162,44 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
       });
 
       const nuevaObra = await resObra.json();
+      if (!resObra.ok) throw new Error('Error al guardar la obra');
 
-      if (!resObra.ok) {
-        throw new Error('Error al crear la obra');
+      if (!obraInicial && imagenes.length > 0) {
+        const urlsSubidas = await Promise.all(
+          imagenes.map(async (imagen) => {
+            const imagenUrl = await uploadImageToCloudinary(imagen);
+            if (contentTypeObra) {
+              await fetch('http://localhost:8000/api/photos/', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  content_type: contentTypeObra,
+                  object_id: nuevaObra.id,
+                  url: imagenUrl,
+                }),
+              });
+            }
+            return imagenUrl;
+          })
+        );
+
+        if (urlsSubidas.length > 0) {
+          await fetch(`http://localhost:8000/api/obras/${nuevaObra.id}/`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              imagen_url: urlsSubidas[0],
+            }),
+          });
+        }
       }
 
-      console.log('✅ Obra creada:', nuevaObra);
-
-      // Subir imágenes en paralelo
-      const urlsSubidas = await Promise.all(
-        imagenes.map(async (imagen) => {
-          const imagenUrl = await uploadImageToCloudinary(imagen);
-          console.log('✅ Imagen subida:', imagenUrl);
-
-          if (contentTypeObra) {
-            await fetch('http://localhost:8000/api/photos/', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                content_type: contentTypeObra,
-                object_id: nuevaObra.id,
-                url: imagenUrl,
-              }),
-            });
-
-            console.log('📸 Photo asociada a obra:', imagenUrl);
-          } else {
-            console.error('❌ No se pudo asociar foto: contentTypeObra es null');
-          }
-
-          return imagenUrl; // para actualizar imagen_url después
-        })
-      );
-
-      // Actualizar imagen_url de la obra con la primera
-      if (urlsSubidas.length > 0) {
-        await fetch(`http://localhost:8000/api/obras/${nuevaObra.id}/`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            imagen_url: urlsSubidas[0],
-          }),
-        });
-
-        console.log('🖼️ imagen_url de obra actualizado:', urlsSubidas[0]);
-      }
-
-      // Limpiar formulario
       setTitulo('');
       setDescripcion('');
       setPrecio('');
@@ -185,17 +208,20 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
       setEnVenta(true);
       setStock(1);
       onObraCreada();
-      //window.location.reload();
-
+      if (!obraInicial) {
+        window.location.reload();
+      }
     } catch (err) {
-      console.error('❌ Error al subir imagen o guardar obra:', err);
+      console.error('❌ Error al guardar obra:', err);
       setError('No se pudo guardar la obra.');
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-6 border rounded-md bg-white shadow max-w-md mx-auto">
-      <h2 className="text-xl font-bold text-center">Crear nueva obra</h2>
+      <h2 className="text-xl font-bold text-center">
+        {obraInicial ? 'Editar obra' : 'Crear nueva obra'}
+      </h2>
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
@@ -230,57 +256,47 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
         ))}
       </select>
 
-      {/* Imágenes */}
-      <div>
-        <label className="block text-sm font-medium text-black mb-1">Imágenes</label>
-
-        <div className="flex items-center space-x-4 mb-2">
-          <label className="bg-black text-white px-4 py-2 rounded cursor-pointer hover:bg-gray-800 transition">
-            Elegir archivos
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files) {
-                  setImagenes(Array.from(e.target.files));
-                }
-              }}
-              required
-            />
-          </label>
-
-          <span className="text-black text-sm">
-            {imagenes.length > 0
-              ? `${imagenes.length} archivo(s) seleccionado(s)`
-              : 'Ningún archivo seleccionado'}
-          </span>
-        </div>
-
-        {/* PREVIEW de imágenes */}
-        {imagenes.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {imagenes.map((img, index) => {
-              const url = URL.createObjectURL(img);
-              return (
-                <div key={index} className="relative border rounded overflow-hidden">
-                  <img
-                    src={url}
-                    alt={`Preview ${index + 1}`}
-                    className="w-full h-32 object-cover"
-                  />
-                </div>
-              );
-            })}
+      {!obraInicial && (
+        <div>
+          <label className="block text-sm font-medium text-black mb-1">Imágenes</label>
+          <div className="flex items-center space-x-4 mb-2">
+            <label className="bg-black text-white px-4 py-2 rounded cursor-pointer hover:bg-gray-800 transition">
+              Elegir archivos
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setImagenes(Array.from(e.target.files));
+                  }
+                }}
+                required
+              />
+            </label>
+            <span className="text-black text-sm">
+              {imagenes.length > 0
+                ? `${imagenes.length} archivo(s) seleccionado(s)`
+                : 'Ningún archivo seleccionado'}
+            </span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Opciones de venta */}
+      {obraInicial && obraInicial.imagen_url && (
+        <div className="mb-4">
+          <p className="text-sm font-medium text-black mb-1">Imagen actual:</p>
+          <img
+            src={obraInicial.imagen_url}
+            alt="Imagen actual"
+            className="w-full h-40 object-cover rounded border"
+          />
+        </div>
+      )}
+
       <div className="mt-4 space-y-2">
         <p className="font-semibold text-gray-800 text-center">Opciones de venta</p>
-
         <div className="flex justify-center items-center space-x-2">
           <input
             type="checkbox"
@@ -324,18 +340,20 @@ export default function AgregarObraModal({ usuarioId, token, onObraCreada }: Pro
       </div>
 
       <div className="flex justify-between mt-4">
-        <button
-          type="button"
-          onClick={() => onObraCreada()}
-          className="text-sm text-gray-600 underline"
-        >
-          Cancelar
-        </button>
+        {obraInicial && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="text-sm text-red-600 underline"
+          >
+            Eliminar obra
+          </button>
+        )}
         <button
           type="submit"
           className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
         >
-          Guardar obra
+          {obraInicial ? 'Actualizar obra' : 'Agregar obra'}
         </button>
       </div>
     </form>
