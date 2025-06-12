@@ -161,18 +161,21 @@ export default function PerfilUsuario({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen w-full overflow-hidden">
+    <div className="flex flex-col lg:flex-row w-full min-h-screen">
       <div className="w-full lg:w-[320px] p-6 border-b lg:border-b-0 lg:sticky lg:top-[80px] z-20 bg-white/20 backdrop-blur-sm">
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col py-25 items-center">
+          <h1 className=" capitalize text-3xl font-bold mb-4 text-center text-white  tracking-wider"
+
+          >perfil</h1>
           <Image
             src={user.foto_url || 'https://us.123rf.com/450wm/tuktukdesign/tuktukdesign1608/tuktukdesign160800036/61010819-icono-de-usuario-hombre-perfil-hombre-de-negocios-avatar-ilustraci%C3%B3n-vectorial-persona-glifo.jpg?ver=6'}
             alt="Perfil"
-            width={200}
-            height={200}
+            width={250}
+            height={250}
             className="border-4 border-black shadow-md object-cover"
           />
-          <h2 className="text-2xl font-bold mt-4 text-center text-white">{user.nombre}</h2>
-          <p className="text-sm text-gray-100 text-center">
+          <h2 className="text-2xl capitalize font-bold mt-4 text-center text-white">{user.nombre}</h2>
+          <p className="text-sm capitalize text-gray-100 text-center">
             Rol:{' '}
             <span className="font-semibold capitalize">
               {user.tipo_usuario === 'artista'
@@ -184,10 +187,10 @@ export default function PerfilUsuario({
                 : 'No especificado'}
             </span>
           </p>
-          <p className="text-sm text-gray-100 text-center mb-2">
+          <p className="text-sm capitalize text-gray-100 text-center mb-2">
             Región: <span className="font-semibold">{user.region}</span>
           </p>
-          <p className="w-4/5 mx-auto text-sm text-gray-100 text-center mb-4 break-words">
+          <p className="w-4/5 mx-auto capitalize text-sm text-gray-100 text-center mb-4 break-words">
             {user.descripcion || 'Sin descripción'}
           </p>
 
@@ -198,13 +201,13 @@ export default function PerfilUsuario({
                   router.push('/profile/editar');
                   router.refresh();
                 }}
-                className="bg-black text-white px-4 py-2 rounded hover:bg-rose-950 transition text-sm"
+                className="bg-black text-white capitalize px-4 py-2 rounded hover:bg-gray-400 transition text-sm"
               >
                 Editar Perfil
               </button>
               <button
                 onClick={() => setMostrarFormObra(true)}
-                className="bg-black text-white px-4 py-2 rounded hover:bg-rose-950 transition text-sm"
+                className="bg-black text-white px-4 capitalize py-2 rounded hover:bg-gray-400 transition text-sm"
               >
                 Agregar Publicacion
               </button>
@@ -222,14 +225,14 @@ export default function PerfilUsuario({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3 w-full">
+          <div className="grid  capitalize grid-cols-2 gap-3 w-full">
             {[{ label: 'En venta', count: obrasEnVenta.length },
               { label: 'No en venta', count: obrasNoVenta.length },
               { label: 'Seguidores', count: user.seguidores_count ?? 0 },
               { label: 'Me gusta', count: totalLikes }].map((item, i) => (
               <div
                 key={i}
-                className="w-full bg-gray-100 rounded-xl text-black shadow text-center"
+                className="w-full bg-gray-100 rounded-xl hover:scale-105 transition-transform duration-300 text-black shadow text-center"
               >
                 <p className="text-xl font-bold">{item.count}</p>
                 <p className="text-sm text-gray-600">{item.label}</p>
@@ -241,11 +244,11 @@ export default function PerfilUsuario({
 
       <div className="flex-1 p-6 overflow-y-auto" ref={containerRef}>
         <div className="z-10 p-6 pb-2 border-black">
-          <div className="mx-auto bg-white/20 border-black rounded-md overflow-hidden">
+          <div className="mx-auto bg-white/20 capitalize border-black rounded-md overflow-hidden">
             {['venta', 'noVenta'].map((tab) => (
               <button
                 key={tab}
-                className={`w-1/2 py-3 font-semibold text-sm ${
+                className={`w-1/2 py-3 hover:scale-105 transition-transform duration-300 capitalize font-semibold text-sm ${
                   activeTab === tab ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'
                 }`}
                 onClick={() => reiniciarScrollYCantidad(tab as 'venta' | 'noVenta')}

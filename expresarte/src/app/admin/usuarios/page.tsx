@@ -8,7 +8,7 @@ interface Usuario {
   id: number
   nombre: string
   email: string
-  foto_url: string
+  foto_url: string 
 }
 
 export default function UsuariosAdminPage() {
@@ -108,7 +108,7 @@ export default function UsuariosAdminPage() {
         },
         body: JSON.stringify({
           ...form,
-          foto_url: fotoURL,
+          foto_url: fotoURL ,
           password: editandoId ? undefined : form.password, // solo al crear
         }),
       })
@@ -139,7 +139,7 @@ export default function UsuariosAdminPage() {
   }
 
   return (
-    <div className="p-4 bg-white min-h-screen text-black">
+    <div className="p-20 bg-white min-h-screen text-black">
       <h2 className="text-3xl font-bold mb-6">Usuarios</h2>
       {mensaje && (
         <div className="mb-4 p-3 bg-green-100 text-green-800 rounded shadow">
@@ -251,15 +251,15 @@ export default function UsuariosAdminPage() {
               <td className="p-3">{user.nombre}</td>
               <td className="p-3">{user.email}</td>
               <td className="p-3">
-                {user.foto_url ? (
+                {user.foto_url? (
                   <a href={`/usuarios/${user.id}`}>
                     <Image
-                      src={user.foto_url}
+                      src={user.foto_url} 
                       alt={user.nombre}
                       width={40}
                       height={40}
                       className="rounded-full object-cover"
-                    />
+                    /> 
                   </a>
                 ) : (
                   <span className="text-gray-400">Sin foto</span>

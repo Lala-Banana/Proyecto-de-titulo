@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import ObrasGrid from '@/app/components/ObrasGrid';
+import { useRouter } from 'next/navigation';
 import NavbarCombined from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
 
@@ -16,6 +16,7 @@ interface Obra {
 }
 
 export default function ObrasPage() {
+  const router = useRouter();
   const [todasLasObras, setTodasLasObras] = useState<Obra[]>([]);
   const [obrasFiltradas, setObrasFiltradas] = useState<Obra[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,17 +43,7 @@ export default function ObrasPage() {
     fetchObras();
   }, []);
 
-  const aplicarFiltroCategoria = (categoriaId: number | null) => {
-    if (categoriaId === null) {
-      setObrasFiltradas(todasLasObras);
-    } else {
-      setObrasFiltradas(
-        todasLasObras.filter((obra) => obra.categoria === categoriaId)
-      );
-    }
-  };
-
-  // Filtra según estado de venta además del filtro de categoría
+  // Aplicar filtro de venta
   const obrasMostradas = obrasFiltradas.filter((obra) => {
     if (filtroVenta === 'enVenta') return obra.en_venta;
     if (filtroVenta === 'noVenta') return !obra.en_venta;
@@ -72,30 +63,34 @@ export default function ObrasPage() {
             <button
               onClick={() => setFiltroVenta('all')}
               className={`px-4 py-2 rounded-lg transition ${
-            filtroVenta === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'
-            }`}
+                filtroVenta === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-black'
+              }`}
             >
               Todos
             </button>
             <button
               onClick={() => setFiltroVenta('enVenta')}
               className={`px-4 py-2 rounded-lg transition ${
-            filtroVenta === 'enVenta' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'
-            }`}
+                filtroVenta === 'enVenta'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-black'
+              }`}
             >
               En venta
             </button>
             <button
               onClick={() => setFiltroVenta('noVenta')}
               className={`px-4 py-2 rounded-lg transition ${
-            filtroVenta === 'noVenta' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'
-            }`}
+                filtroVenta === 'noVenta'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-black'
+              }`}
             >
               No en venta
             </button>
           </div>
-
-          
 
           {loading ? (
             <p className="text-center mt-10">Cargando obras...</p>
@@ -106,13 +101,32 @@ export default function ObrasPage() {
               No hay obras que coincidan con el filtro.
             </p>
           ) : (
-            <ObrasGrid
-              obras={obrasMostradas.map((obra) => ({
-                ...obra,
-                precio: Number(obra.precio),
-              }))}
-              slug="todas"
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {obrasMostradas.map((obra) => (
+                <div
+                  key={obra.id}
+                  className="group cursor-pointer border hover:scale-105 transition-transform duration-300 text-black border-gray-300 rounded-r-full"
+                  onClick={() => router.push(`/publicaciones/${obra.id}`)}
+                >
+                  <div className="aspect-square overflow-hidden shadow-neutral-950">
+                    <img
+                      src={obra.imagen_url || '/default-image.jpg'}
+                      alt={obra.titulo}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="max-h-34 overflow-hidden bg-white p-4">
+                    <h2 className="text-lg font-bold mb-1">{obra.titulo}</h2>
+                    <p className="text-sm mb-1">
+                      Precio: ${Number(obra.precio).toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-700 mb-2 truncate">
+                      {obra.descripcion}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </main>

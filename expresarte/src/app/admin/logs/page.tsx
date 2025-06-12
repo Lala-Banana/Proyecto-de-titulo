@@ -43,7 +43,7 @@ export default function LogsPage() {
   }
 
   return (
-    <div className="p-6 bg-white min-h-screen text-black">
+    <div className="p-20 bg-white min-h-screen text-black">
       <h2 className="text-3xl font-bold mb-6">🗂️ Registros de Cambios (Logs)</h2>
 
       {loading && <p>Cargando registros...</p>}

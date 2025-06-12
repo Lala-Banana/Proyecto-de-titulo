@@ -14,7 +14,7 @@ from .views import (
     CategoriaAdminListView,
     ObrasPorUsuarioView,
     ObraContentTypeView,
-    PhotoListCreateView,
+    PhotoListCreateView, mp_webhook,
     toggle_me_gusta,
     is_following_view, 
     toggle_follow_view,
@@ -95,6 +95,7 @@ urlpatterns = [
     #Seguidores
     path('usuarios/<int:usuario_id>/is-following/', is_following_view, name='is-following'),
     path('usuarios/<int:usuario_id>/toggle-follow/', toggle_follow_view, name='toggle-follow'),
+    path('pagos/webhook/', mp_webhook),   # <-- tu webhook
 
 
 ]

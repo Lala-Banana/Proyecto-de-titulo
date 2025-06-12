@@ -56,22 +56,22 @@ const CategoriasGrid: React.FC<Props> = ({
   const columnasClase = `grid-cols-1 sm:grid-cols-2 ${colsMap[columnas] || colsMap[4]}`;
 
   return (
-    <div className="flex justify-center items-start bg-[#f7f7f7] py-30">
-      <div className="w-full max-w-7xl px-4 text-center">
+    <div className="flex justify-center capitalize items-start bg-[#f7f7f7] py-30">
+      <div className="w-full max-w-7xl  px-4 text-center">
         <h1 className="text-4xl font-serif italic font-bold tracking-wider text-black mb-6">
           {titulo}
         </h1>
-        <div className={`grid ${columnasClase} gap-6 w-full`}>
+        <div className={`grid ${columnasClase} gap-6 w-full `}>
           {categoriasMostradas.map((cat) => (
             <div
               key={cat.id}
               onClick={() => handleClick(cat.slug)}
-              className="cursor-pointer relative group aspect-square overflow-hidden rounded-xl shadow-md"
+              className="cursor-pointer hover:scale-105 transition-transform duration-300 relative group aspect-square overflow-hidden rounded-xl shadow-md"
             >
               <img
                 src={cat.imagen_url ?? '/default-image.jpg'}
                 alt={cat.nombre}
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-opacity-0 text-white py-2 text-center">
                 <span className="text-lg font-semibold">{cat.nombre}</span>

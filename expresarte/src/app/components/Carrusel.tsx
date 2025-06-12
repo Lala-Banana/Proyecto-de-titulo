@@ -47,7 +47,7 @@ export default function Carrusel() {
   const goToPrev = () => setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
 
   return (
-    <div className="relative w-full h-[350px] sm:h-[450px] md:h-[600px] overflow-hidden rounded-xl shadow-lg">
+    <div className="relative w-full h-[350px] sm:h-[450px] md:h-[600px] xl:h-[911px] overflow-hidden shadow-lg">
       {slides.map((slide, index) => (
         <Link
           href={slide.link}

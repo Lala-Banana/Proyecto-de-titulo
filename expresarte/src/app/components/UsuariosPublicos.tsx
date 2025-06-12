@@ -55,7 +55,7 @@ export default function UsuariosPublicos() {
           <div
             key={u.id}
             onClick={() => router.push(`/usuarios/${u.id}`)}
-            className="cursor-pointer bg-white rounded-lg shadow p-4 sm:p-6 flex flex-col items-center text-center hover:shadow-lg transition overflow-hidden"
+            className="cursor-pointer bg-white hover:scale-105 transition-transform duration-300 rounded-lg shadow p-4 sm:p-6 flex flex-col items-center text-center "
           >
             <div className="w-16 h-16 sm:w-20 sm:h-20 mb-4 flex-shrink-0">
               <Image

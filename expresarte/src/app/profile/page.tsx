@@ -48,7 +48,7 @@ export default function ProfilePage() {
     <div className=" text-gray-900">
       <NavbarCombined />
 
-      <div className="relative min-h-screen">
+      <div className="relative min-h-screen ">
         <div className="absolute inset-0 z-0">
           <img
             src={
@@ -61,7 +61,7 @@ export default function ProfilePage() {
           <div className="absolute inset-0 bg-black/40 backdrop-blur-none" />
         </div>
 
-        <div className="relative z-10 py-12 px-4 text-white flex flex-col items-center">
+        <div className="relative z-10 py-12 px-4  text-white flex flex-col items-center">
           <PerfilUsuario 
             user={user}
             token={token || ''}

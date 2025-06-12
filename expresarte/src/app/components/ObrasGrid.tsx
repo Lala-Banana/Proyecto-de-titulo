@@ -63,7 +63,7 @@ export default function ObrasGrid({ obras, slug, columnas = 4, onEditar, onElimi
         <div
           key={obra.id}
           onClick={() => handleClickObra(obra.id)}
-          className="relative w-full aspect-square bg-gray-100 rounded shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
+          className="relative w-full aspect-square bg-gray-100 rounded shadow-md overflow-hidden hover:scale-105 transition-transform duration-300"
         >
           {obra.imagen_url ? (
             <Image
@@ -80,7 +80,7 @@ export default function ObrasGrid({ obras, slug, columnas = 4, onEditar, onElimi
           )}
 
           {obra.en_venta && (
-            <div className="absolute top-1 left-1 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+            <div className="absolute top-1 left-1 bg-gray-600 opacity-75 text-white text-md px-2 py-1 rounded">
               ${Number(obra.precio).toLocaleString('es-CL')}
             </div>
           )}
@@ -88,10 +88,10 @@ export default function ObrasGrid({ obras, slug, columnas = 4, onEditar, onElimi
           {obra.esPropia && (
             <div className="absolute top-1 right-1">
               <button
-                className="p-1 bg-black bg-opacity-60 text-white rounded-full hover:bg-opacity-80"
+                className="p-1  bg-opacity-60 text-white rounded-full hover:bg-opacity-80"
                 onClick={(e) => toggleMenu(obra.id, e)}
               >
-                <BsThreeDotsVertical size={16} />
+                <BsThreeDotsVertical size={26} />
               </button>
 
               {menuVisibleId === obra.id && (

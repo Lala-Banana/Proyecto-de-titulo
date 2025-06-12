@@ -1,5 +1,6 @@
 # views.py (completo y corregido)
 import os
+from venv import logger
 from mercadopago import SDK
 from rest_framework import generics, permissions, status
 from rest_framework.generics import ListAPIView
@@ -206,17 +207,19 @@ class LogListView(generics.ListAPIView):
 
 class ObrasPorCategoriaView(generics.ListAPIView):
     serializer_class = ObraSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    # ← elimina cualquier chequeo de sesión o JWT aquí:
+    authentication_classes = []
+
+    # ← permites libre acceso:
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
-        categoria_slug = self.kwargs['slug']
-
+        slug = self.kwargs['slug']
         try:
-            categoria = Categoria.objects.get(slug=categoria_slug)
+            categoria = Categoria.objects.get(slug=slug)
         except Categoria.DoesNotExist:
-            raise NotFound(f"No se encontró la categoría con slug '{categoria_slug}'")
-
-        # Solo devolver obras activas que pertenezcan exactamente a esa categoría
+            raise NotFound(f"No se encontró la categoría '{slug}'")
         return Obra.objects.filter(categoria=categoria, activo=True)
 
 @api_view(['GET'])
@@ -371,102 +374,161 @@ from django.contrib.auth import get_user_model
 
 Usuario = get_user_model()
 from .models import Obra  # Asegúrate de que tu modelo Obra esté aquí importado
+# views.py
+
+import os
+import logging
+from django.views.decorators.csrf import csrf_exempt
+
+from django.contrib.auth import get_user_model
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework import status
+from mercadopago import SDK
+
+from .models import Obra
+
+logger = logging.getLogger(__name__)
+User = get_user_model()
+
+
 @api_view(['POST'])
+@csrf_exempt
 def crear_preferencia_pro(request):
     """
-    Crear una preferencia de Checkout Pro en MERCADOPAGO (producción).
-
-    Recibe en request.data:
-      - obra_id : int  (PK de la Obra que se va a vender)
-
-    Flujo:
-      1) Valida que venga 'obra_id' en el JSON
-      2) Obtiene la instancia de Obra desde la DB
-      3) Toma: titulo y precio de la obra
-      4) Inicializa el SDK con el access_token de producción
-      5) Arma preference_data (sin collector_id, ya que cobra a tu cuenta)
-      6) Crea la preferencia y devuelve el init_point de producción
+    Crea preferencia de Checkout Pro en producción,
+    incluyendo metadata de obra_id y cantidad.
     """
-
     data = request.data
-    if "obra_id" not in data:
+
+    # 1) Validar obra_id y cantidad
+    obra_id = data.get('obra_id')
+    cantidad = data.get('cantidad')
+    if obra_id is None or cantidad is None:
         return Response(
-            {"error": "Debes enviar obra_id en el cuerpo de la petición"},
+            {"error": "Debes enviar obra_id y cantidad en el cuerpo de la petición"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
     try:
-        # 1) Obtener la obra desde la DB
-        obra_id = int(data["obra_id"])
+        obra_id = int(obra_id)
+        cantidad = int(cantidad)
+    except (ValueError, TypeError):
+        return Response(
+            {"error": "obra_id y cantidad deben ser enteros válidos"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # 2) Obtener la obra
+    try:
         obra = Obra.objects.get(pk=obra_id)
-
-        # 2) Extraer datos de la obra
-        titulo = obra.titulo
-        precio = float(obra.precio)
-
-        # 3) Inicializar el SDK de MercadoPago en PRODUCCIÓN
-        access_token_prod = os.getenv("MP_ACCESS_TOKEN")
-        if not access_token_prod:
-            return Response(
-                {"error": "No se encontró MP_ACCESS_TOKEN en configuración"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        mp = SDK(access_token_prod)
-
-        # 4) Armar el diccionario de preferencia
-        #    En producción cobramos directamente a la cuenta del access_token,
-        #    por lo que NO incluimos collector_id ni marketplace_fee.
-        preference_data = {
-            "items": [
-                {
-                    "title": titulo,
-                    "quantity": 1,
-                    "unit_price": precio
-                }
-            ],
-            "back_urls": {
-                # Reemplaza estas URLs por las rutas reales de tu frontend en producción
-                "success": "https://misitio.com/pago/exito",
-                "failure": "https://misitio.com/pago/fallo",
-                "pending": "https://misitio.com/pago/pendiente"
-            },
-            "auto_return": "approved",
-            # URL para recibir notificaciones en producción (webhook configurado)
-            "notification_url": "https://misitio.com/api/pagos/webhook/"
-        }
-
-        # 5) Crear la preferencia en MercadoPago (PRODUCCIÓN)
-        respuesta = mp.preference().create(preference_data)
-
-        # 6) Extraer el init_point (URL de checkout) para producción
-        init_point = None
-        if "response" in respuesta:
-            init_point = respuesta["response"].get("init_point")
-
-        if not init_point:
-            # Si no vino init_point, devolvemos el error completo de MP
-            return Response(
-                {
-                    "error": "No se generó init_point",
-                    "raw_mp_response": respuesta
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-        # 7) Devolver al frontend la URL de producción para redirigir al usuario
-        return Response({"init_point": init_point})
-
     except Obra.DoesNotExist:
         return Response(
             {"error": f"No existe ninguna Obra con id={obra_id}"},
             status=status.HTTP_404_NOT_FOUND
         )
 
-    except Exception as e:
+    # 3) Validar stock
+    if cantidad < 1 or cantidad > obra.stock:
         return Response(
-            {"error": f"No se pudo crear la preferencia: {str(e)}"},
+            {"error": f"Cantidad inválida. Debe estar entre 1 y {obra.stock}"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # 4) Preparar datos
+    titulo = obra.titulo
+    precio_unitario = float(obra.precio)
+
+    # 5) Inicializar SDK de MercadoPago
+    access_token = os.getenv("MP_ACCESS_TOKEN")
+    if not access_token:
+        return Response(
+            {"error": "No se encontró MP_ACCESS_TOKEN en configuración"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+    mp = SDK(access_token)
+
+    # 6) Armar preference_data con metadata
+    preference_data = {
+        "items": [
+            {"title": titulo, "quantity": cantidad, "unit_price": precio_unitario}
+        ],
+        "metadata": {"obra_id": obra.id, "cantidad": cantidad},
+        "back_urls": {
+            "success": "https://misitio.com/pago/exito",
+            "failure": "https://misitio.com/pago/fallo",
+            "pending": "https://misitio.com/pago/pendiente"
+        },
+        "auto_return": "approved",
+        "notification_url": "https://misitio.com/api/pagos/webhook/"
+    }
+
+    # 7) Crear preferencia
+    respuesta = mp.preference().create(preference_data)
+    init_point = respuesta.get("response", {}).get("init_point")
+    if not init_point:
+        logger.error("MP no devolvió init_point: %s", respuesta)
+        return Response(
+            {"error": "No se generó init_point", "raw_mp_response": respuesta},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+    return Response({"init_point": init_point})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@csrf_exempt
+def mp_webhook(request):
+    """
+    Webhook para notificaciones de MercadoPago.
+    Descuenta stock sólo cuando el pago esté approved.
+    """
+    logger.info("🔔 Webhook MP recibido: %s", request.data)
+
+    payload = request.data
+    tipo = payload.get("type") or payload.get("topic") or ""
+    if "payment" not in tipo:
+        logger.info("Ignorado: no es notificación de pago (%s)", tipo)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    pay_id = payload.get("data", {}).get("id")
+    if not pay_id:
+        logger.warning("No se encontró data.id en payload")
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    mp = SDK(os.getenv("MP_ACCESS_TOKEN"))
+    pago = mp.payment().get(pay_id).get("response", {})
+    estado = pago.get("status")
+    logger.info("Estado del pago %s en MP: %s", pay_id, estado)
+    if estado != "approved":
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    pref_id = pago.get("preference_id")
+    metadata = mp.preference().get(pref_id).get("response", {}).get("metadata", {})
+    logger.info("Metadata de preferencia %s: %s", pref_id, metadata)
+
+    try:
+        obra_id = int(metadata.get("obra_id"))
+        cantidad = int(metadata.get("cantidad"))
+    except (TypeError, ValueError):
+        logger.error("Metadata inválida: %s", metadata)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        obra = Obra.objects.get(pk=obra_id)
+    except Obra.DoesNotExist:
+        logger.error("Obra id=%s no encontrada al descontar stock", obra_id)
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    logger.info("Stock antes (obra %s): %d", obra_id, obra.stock)
+    obra.stock = max(obra.stock - cantidad, 0)
+    obra.save(update_fields=["stock"])
+    logger.info("Stock después (obra %s): %d", obra_id, obra.stock)
+
+    return Response(status=status.HTTP_200_OK)
+
 
 class ObraContentTypeView(APIView):
     def get(self, request):

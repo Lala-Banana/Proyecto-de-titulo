@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { fetchConAuth } from '@/lib/auth';
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { fetchConAuth } from "@/lib/auth";
 
 interface Usuario {
   id: number;
@@ -28,7 +28,7 @@ interface Obra {
 }
 
 export default function ObrasAdminPage() {
-  const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
   const [obras, setObras] = useState<Obra[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -37,24 +37,28 @@ export default function ObrasAdminPage() {
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [titulo, setTitulo] = useState('');
-  const [descripcion, setDescripcion] = useState('');
+  const [titulo, setTitulo] = useState("");
+  const [descripcion, setDescripcion] = useState("");
   const [categoriaId, setCategoriaId] = useState<number | null>(null);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
   const [imagenes, setImagenes] = useState<File[]>([]);
 
   const [enVenta, setEnVenta] = useState(true);
-  const [precio, setPrecio] = useState('');
+  const [precio, setPrecio] = useState("");
   const [stock, setStock] = useState(1);
 
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const router = useRouter();
 
-  const getToken = () => localStorage.getItem('access_token') ?? '';
+  const getToken = () => localStorage.getItem("access_token") ?? "";
 
   const fetchObras = async () => {
     const token = getToken();
-    const data = await fetchConAuth(`${BASE}/api/admin/obras/`, token, setError);
+    const data = await fetchConAuth(
+      `${BASE}/api/admin/obras/`,
+      token,
+      setError
+    );
     if (data && Array.isArray(data)) setObras(data);
   };
 
@@ -79,7 +83,7 @@ export default function ObrasAdminPage() {
       const data = await res.json();
       setContentTypeObra(data.content_type_id);
     } catch (err) {
-      console.error('Error al obtener content type de Obra:', err);
+      console.error("Error al obtener content type de Obra:", err);
     }
   };
 
@@ -92,17 +96,20 @@ export default function ObrasAdminPage() {
 
   const uploadImageToCloudinary = async (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'expresarte_preset');
+    formData.append("file", file);
+    formData.append("upload_preset", "expresarte_preset");
 
-    const res = await fetch('https://api.cloudinary.com/v1_1/drb5jrimz/image/upload', {
-      method: 'POST',
-      body: formData,
-    });
+    const res = await fetch(
+      "https://api.cloudinary.com/v1_1/drb5jrimz/image/upload",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
 
     const data = await res.json();
     if (!res.ok) {
-      throw new Error(data.error?.message || 'Error al subir imagen');
+      throw new Error(data.error?.message || "Error al subir imagen");
     }
 
     return data.secure_url;
@@ -114,23 +121,23 @@ export default function ObrasAdminPage() {
 
     const token = getToken();
     if (!token) {
-      setError('🔐 No tienes permiso.');
+      setError("🔐 No tienes permiso.");
       return;
     }
 
     // Validaciones
     if (!titulo || !descripcion || !categoriaId || !usuarioId) {
-      setError('⚠️ Completa todos los campos requeridos.');
+      setError("⚠️ Completa todos los campos requeridos.");
       return;
     }
 
     if (enVenta && (!precio || Number(precio) <= 0 || !stock || stock <= 0)) {
-      setError('⚠️ Completa precio y stock válidos.');
+      setError("⚠️ Completa precio y stock válidos.");
       return;
     }
 
     if (imagenes.length === 0) {
-      setError('⚠️ Debes subir al menos una imagen.');
+      setError("⚠️ Debes subir al menos una imagen.");
       return;
     }
 
@@ -139,8 +146,8 @@ export default function ObrasAdminPage() {
       const bodyObra = {
         titulo,
         descripcion,
-        precio: enVenta ? precio : '0',
-        imagen_url: '',
+        precio: enVenta ? precio : "0",
+        imagen_url: "",
         en_venta: enVenta,
         destacada: false,
         usuario: usuarioId,
@@ -151,19 +158,19 @@ export default function ObrasAdminPage() {
       const url = editandoId
         ? `${BASE}/api/admin/obras/${editandoId}/`
         : `${BASE}/api/admin/obras/`;
-      const method = editandoId ? 'PUT' : 'POST';
+      const method = editandoId ? "PUT" : "POST";
 
       const resObra = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(bodyObra),
       });
 
       const nuevaObra = await resObra.json();
-      if (!resObra.ok) throw new Error('Error al crear/editar obra');
+      if (!resObra.ok) throw new Error("Error al crear/editar obra");
 
       // Subir imágenes
       const urlsSubidas = await Promise.all(
@@ -172,9 +179,9 @@ export default function ObrasAdminPage() {
 
           if (contentTypeObra) {
             await fetch(`${BASE}/api/photos/`, {
-              method: 'POST',
+              method: "POST",
               headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify({
@@ -192,9 +199,9 @@ export default function ObrasAdminPage() {
       // Actualizar imagen_url principal
       if (urlsSubidas.length > 0) {
         await fetch(`${BASE}/api/admin/obras/${nuevaObra.id}/`, {
-          method: 'PATCH',
+          method: "PATCH",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
@@ -204,24 +211,23 @@ export default function ObrasAdminPage() {
       }
 
       // Limpiar form
-      setTitulo('');
-      setDescripcion('');
+      setTitulo("");
+      setDescripcion("");
       setCategoriaId(null);
       setUsuarioId(null);
       setImagenes([]);
       setEnVenta(true);
-      setPrecio('');
+      setPrecio("");
       setStock(1);
       setEditandoId(null);
 
       fetchObras();
 
-      setMensaje(editandoId ? '✅ Obra actualizada' : '✅ Obra creada');
+      setMensaje(editandoId ? "✅ Obra actualizada" : "✅ Obra creada");
       setTimeout(() => setMensaje(null), 3000);
-
     } catch (err) {
-      console.error('❌ Error al guardar obra:', err);
-      setError('❌ No se pudo guardar la obra.');
+      console.error("❌ Error al guardar obra:", err);
+      setError("❌ No se pudo guardar la obra.");
     }
   };
 
@@ -229,7 +235,7 @@ export default function ObrasAdminPage() {
     setTitulo(obra.titulo);
     setDescripcion(obra.descripcion);
     setCategoriaId(obra.categoria);
-    setUsuarioId(obra.usuario.id || null);
+    setUsuarioId(obra.usuario.id);
     setPrecio(obra.precio);
     setStock(obra.stock);
     setEnVenta(obra.en_venta);
@@ -238,16 +244,16 @@ export default function ObrasAdminPage() {
   };
 
   const eliminarObra = async (id: number) => {
-    if (!confirm('¿Eliminar esta obra?')) return;
+    if (!confirm("¿Eliminar esta obra?")) return;
     const token = getToken();
     await fetch(`${BASE}/api/admin/obras/${id}/`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
     fetchObras();
-    setMensaje('🗑️ Obra eliminada exitosamente.');
+    setMensaje("🗑️ Obra eliminada exitosamente.");
     setTimeout(() => setMensaje(null), 3000);
   };
 
@@ -258,152 +264,159 @@ export default function ObrasAdminPage() {
   if (error) {
     return (
       <div className="p-6 bg-white min-h-screen text-black">
-        <div className="bg-red-100 text-red-800 p-4 rounded shadow">{error}</div>
+        <div className="bg-red-100 text-red-800 p-4 rounded shadow">
+          {error}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 bg-white min-h-screen text-black">
+    <div className="p-20 bg-white min-h-screen text-black">
       <h2 className="text-3xl font-bold mb-6">Obras</h2>
 
       {mensaje && (
-        <div className="mb-4 p-3 bg-green-100 text-green-800 rounded shadow">{mensaje}</div>
+        <div className="mb-4 p-3 bg-green-100 text-green-800 rounded shadow">
+          {mensaje}
+        </div>
       )}
 
-      <form onSubmit={guardarObra} className="space-y-4 bg-gray-100 p-4 rounded mb-8">
-  <input
-    type="text"
-    placeholder="Título"
-    value={titulo}
-    onChange={(e) => setTitulo(e.target.value)}
-    className="w-full p-2 rounded border"
-    required
-  />
-
-  <textarea
-    placeholder="Descripción"
-    value={descripcion}
-    onChange={(e) => setDescripcion(e.target.value)}
-    className="w-full p-2 rounded border"
-    required
-  />
-
-  <select
-    value={categoriaId ?? ''}
-    onChange={(e) => setCategoriaId(Number(e.target.value))}
-    className="w-full p-2 rounded border"
-    required
-  >
-    <option value="">Selecciona una categoría</option>
-    {categorias.map((cat) => (
-      <option key={cat.id} value={cat.id}>
-        {cat.nombre}
-      </option>
-    ))}
-  </select>
-
-  <select
-    value={usuarioId ?? ''}
-    onChange={(e) => setUsuarioId(Number(e.target.value))}
-    className="w-full p-2 rounded border"
-    required
-  >
-    <option value="">Selecciona un usuario</option>
-    {usuarios.map((user) => (
-      <option key={user.id} value={user.id}>
-        {user.id} - {user.nombre}
-      </option>
-    ))}
-  </select>
-
-  {/* Imágenes */}
-  <div>
-    <label className="block mb-1 font-medium">Imágenes</label>
-    <div className="flex items-center space-x-4 mb-2">
-      <label className="bg-black text-white px-4 py-2 rounded cursor-pointer hover:bg-gray-800 transition">
-        Elegir archivos
+      <form
+        onSubmit={guardarObra}
+        className="space-y-4 bg-gray-100 p-4 rounded mb-8"
+      >
         <input
-          type="file"
-          multiple
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            if (e.target.files) {
-              setImagenes(Array.from(e.target.files));
-            }
-          }}
-          required={editandoId === null}
+          type="text"
+          placeholder="Título"
+          value={titulo}
+          onChange={(e) => setTitulo(e.target.value)}
+          className="w-full p-2 rounded border"
+          required
         />
-      </label>
-      <span className="text-black text-sm">
-        {imagenes.length > 0
-          ? `${imagenes.length} archivo(s) seleccionado(s)`
-          : 'Ningún archivo seleccionado'}
-      </span>
-    </div>
-  </div>
 
-  {/* En venta */}
-  <label className="flex items-center gap-2">
-    <input
-      type="checkbox"
-      checked={enVenta}
-      onChange={(e) => setEnVenta(e.target.checked)}
-    />
-    En venta
-  </label>
+        <textarea
+          placeholder="Descripción"
+          value={descripcion}
+          onChange={(e) => setDescripcion(e.target.value)}
+          className="w-full p-2 rounded border"
+          required
+        />
 
-  {enVenta && (
-    <>
-      <input
-        type="number"
-        placeholder="Precio"
-        value={precio}
-        onChange={(e) => setPrecio(e.target.value)}
-        className="w-full p-2 rounded border"
-        min={0}
-      />
-      <input
-        type="number"
-        placeholder="Stock disponible"
-        value={stock}
-        onChange={(e) => setStock(Number(e.target.value))}
-        className="w-full p-2 rounded border"
-        min={1}
-      />
-    </>
-  )}
+        <select
+          value={categoriaId ?? ""}
+          onChange={(e) => setCategoriaId(Number(e.target.value))}
+          className="w-full p-2 rounded border"
+          required
+        >
+          <option value="">Selecciona una categoría</option>
+          {categorias.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.nombre}
+            </option>
+          ))}
+        </select>
 
-  {/* BOTONES */}
-  <div className="flex justify-between mt-4">
-    <button
-      type="button"
-      onClick={() => {
-        setTitulo('');
-        setDescripcion('');
-        setCategoriaId(null);
-        setUsuarioId(null);
-        setImagenes([]);
-        setEnVenta(true);
-        setPrecio('');
-        setStock(1);
-        setEditandoId(null);
-        setError(null);
-      }}
-      className="text-sm text-gray-600 underline"
-    >
-      Limpiar
-    </button>
+        <select
+          value={usuarioId ?? ""}
+          onChange={(e) => setUsuarioId(Number(e.target.value))}
+          className="w-full p-2 rounded border"
+          required
+        >
+          <option value="">Selecciona un usuario</option>
+          {usuarios.map((user) => (
+            <option key={user.id} value={user.id}>
+              {user.id} - {user.nombre}
+            </option>
+          ))}
+        </select>
 
-    <button
-      type="submit"
-      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-    >
-      {editandoId ? 'Actualizar' : 'Agregar'} Obra
-    </button>
-  </div>
-</form>
+        {/* Imágenes */}
+        <div>
+          <label className="block mb-1 font-medium">Imágenes</label>
+          <div className="flex items-center space-x-4 mb-2">
+            <label className="bg-black text-white px-4 py-2 rounded cursor-pointer hover:bg-gray-800 transition">
+              Elegir archivos
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setImagenes(Array.from(e.target.files));
+                  }
+                }}
+                required={editandoId === null}
+              />
+            </label>
+            <span className="text-black text-sm">
+              {imagenes.length > 0
+                ? `${imagenes.length} archivo(s) seleccionado(s)`
+                : "Ningún archivo seleccionado"}
+            </span>
+          </div>
+        </div>
+
+        {/* En venta */}
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={enVenta}
+            onChange={(e) => setEnVenta(e.target.checked)}
+          />
+          En venta
+        </label>
+
+        {enVenta && (
+          <>
+            <input
+              type="number"
+              placeholder="Precio"
+              value={precio}
+              onChange={(e) => setPrecio(e.target.value)}
+              className="w-full p-2 rounded border"
+              min={0}
+            />
+            <input
+              type="number"
+              placeholder="Stock disponible"
+              value={stock}
+              onChange={(e) => setStock(Number(e.target.value))}
+              className="w-full p-2 rounded border"
+              min={1}
+            />
+          </>
+        )}
+
+        {/* BOTONES */}
+        <div className="flex justify-between mt-4">
+          <button
+            type="button"
+            onClick={() => {
+              setTitulo("");
+              setDescripcion("");
+              setCategoriaId(null);
+              setUsuarioId(null);
+              setImagenes([]);
+              setEnVenta(true);
+              setPrecio("");
+              setStock(1);
+              setEditandoId(null);
+              setError(null);
+            }}
+            className="text-sm text-gray-600 underline"
+          >
+            Limpiar
+          </button>
+
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          >
+            {editandoId ? "Actualizar" : "Agregar"} Obra
+          </button>
+        </div>
+      </form>
 
       {/* Tabla */}
       <table className="w-full text-left bg-gray-100 rounded-lg overflow-hidden">
@@ -439,16 +452,35 @@ export default function ObrasAdminPage() {
               </td>
               <td className="p-3">{obra.titulo}</td>
               <td className="p-3">
-                {obra.usuario ? (
+                {obra.usuario && typeof obra.usuario === "object" ? (
                   <>
-                    <span className="font-semibold">ID:</span> {obra.usuario.id}<br />
-                    <span className="font-semibold">Nombre:</span> {obra.usuario.nombre}
+                    <span className="font-semibold">ID:</span> {obra.usuario.id}
+                    <br />
+                    <span className="font-semibold">Nombre:</span>{" "}
+                    {obra.usuario.nombre}
                   </>
-                ) : 'Sin usuario'}
+                ) : (
+                  (() => {
+                    const userId =
+                      typeof obra.usuario === "number" ? obra.usuario : NaN;
+                    const user = usuarios.find((u) => u.id === userId);
+                    return user ? (
+                      <>
+                        <span className="font-semibold">ID:</span> {user.id}
+                        <br />
+                        <span className="font-semibold">Nombre:</span>{" "}
+                        {user.nombre}
+                      </>
+                    ) : (
+                      <span className="text-gray-400">Sin usuario</span>
+                    );
+                  })()
+                )}
               </td>
+
               <td className="p-3">${obra.precio}</td>
               <td className="p-3">{obra.stock}</td>
-              <td className="p-3">{obra.en_venta ? '✅' : '❌'}</td>
+              <td className="p-3">{obra.en_venta ? "✅" : "❌"}</td>
               <td className="p-3 flex gap-2">
                 <button
                   onClick={() => editarObra(obra)}

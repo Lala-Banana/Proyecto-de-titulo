@@ -179,7 +179,7 @@ export default function CategoriasPage() {
   }
 
   return (
-    <div className="p-4 bg-white min-h-screen text-black">
+    <div className=" capitalize bg-white min-h-screen text-black">
       <h2 className="text-3xl font-bold mb-6">Categorías</h2>
 
       {mensaje && (
