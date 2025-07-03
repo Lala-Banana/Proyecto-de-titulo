@@ -68,7 +68,7 @@ export default function PublicacionPage() {
       }
       try {
         // Traer datos de la obra
-        const res = await fetch(`${BASE_URL}/api/obras/${obraId}/`);
+        const res = await fetch(`${BASE_URL}/api/obras/${obraId}/`, { cache: "no-store" });
         if (!res.ok) throw new Error(`Status ${res.status}`);
         const obraData: Obra = await res.json();
         setObra(obraData);
@@ -220,7 +220,7 @@ export default function PublicacionPage() {
           <aside className="space-y-2">
             <div className="bg-white p-4 rounded-xl shadow-lg space-y-4">
               <h1 className="text-4xl text-black font-bold">{obra.titulo}</h1>
-              <p className="text-3xl text-gray-900">{obra.descripcion}</p>
+              <p className="text-1xl text-gray-900">{obra.descripcion}</p>
 
               {obra.en_venta === true && (
                 <p className="text-2xl text-gray-900">

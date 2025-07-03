@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -37,7 +37,7 @@ export default function BuscarPage() {
       setError('');
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/obras/buscar/?search=${encodeURIComponent(query)}`
+          `${process.env.NEXT_PUBLIC_API_URL}obras/buscar/?search=${encodeURIComponent(query)}`
         );
 
         if (!res.ok) {
@@ -47,14 +47,16 @@ export default function BuscarPage() {
 
         const data = await res.json();
 
-        if (typeof data === 'string' && data.startsWith('<!DOCTYPE')) {
-          throw new Error('Respuesta inesperada del servidor (HTML en lugar de JSON)');
+        // Si la respuesta es HTML o no es objeto/array, lanza error
+        if (typeof data !== 'object' || data === null || typeof data === 'string') {
+          throw new Error('Respuesta inesperada del servidor');
         }
 
-        setObras(data);
+        setObras(Array.isArray(data) ? data : []);
       } catch (err: any) {
         console.error('Error al buscar obras:', err);
         setError('Hubo un problema al buscar obras. Intenta nuevamente.');
+        setObras([]);
       } finally {
         setLoading(false);
       }

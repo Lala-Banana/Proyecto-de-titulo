@@ -235,7 +235,9 @@ export default function ObrasAdminPage() {
     setTitulo(obra.titulo);
     setDescripcion(obra.descripcion);
     setCategoriaId(obra.categoria);
-    setUsuarioId(obra.usuario.id);
+    setUsuarioId(
+      typeof obra.usuario === "object" ? obra.usuario.id : obra.usuario
+    );
     setPrecio(obra.precio);
     setStock(obra.stock);
     setEnVenta(obra.en_venta);

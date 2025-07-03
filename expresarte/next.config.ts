@@ -2,7 +2,6 @@
 
 const nextConfig = {
   images: {
-    domains: ['res.cloudinary.com', 'images.unsplash.com'],
     remotePatterns: [
       { 
         protocol: 'https', 
@@ -11,7 +10,17 @@ const nextConfig = {
       },
       { 
         protocol: 'https', 
-        hostname: 'example.com',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**' 
+      },
+      { 
+        protocol: 'https', 
+        hostname: 'images.unsplash.com',
+        pathname: '/**'
+      },
+      { 
+        protocol: 'https', 
+        hostname: 'plus.unsplash.com',
         pathname: '/**'
       },
       { 
@@ -22,16 +31,6 @@ const nextConfig = {
       { 
         protocol: 'https', 
         hostname: 'picsum.photos',
-        pathname: '/**'
-      },
-      { 
-        protocol: 'https', 
-        hostname: 'images.unsplash.com',
-        pathname: '/**'
-      },
-      { 
-        protocol: 'https', 
-        hostname: 'plus.unsplash.com',
         pathname: '/**'
       },
       { 
@@ -69,7 +68,7 @@ const nextConfig = {
         hostname: 'cl.pinterest.com',
         pathname: '/**',
       },
-       {
+      {
         protocol: 'https',
         hostname: 'images.icon-icons.com',
         pathname: '/**',

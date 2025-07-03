@@ -181,6 +181,13 @@ export default function LoginForm() {
           >
             <FcGoogle className="text-2xl" /> Iniciar con Google
           </button>
+          <p className="text-sm text-gray-600 text-center">
+            ¿No tienes cuenta?{' '}
+            <a href="/register" className="text-black font-semibold hover:underline">
+              Regístrate aquí
+            </a>
+          </p>
+          
         </form>
       </div>
     </div>

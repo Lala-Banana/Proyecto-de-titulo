@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-
 interface Categoria {
   id: number;
   nombre: string;
@@ -29,11 +28,11 @@ export default function CrearObraForm({ usuarioId, token, onObraCreada, obraInic
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [precio, setPrecio] = useState('');
+  const [precioNumerico, setPrecioNumerico] = useState('');
   const [categoriaId, setCategoriaId] = useState<number | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [contentTypeObra, setContentTypeObra] = useState<number | null>(null);
-
   const [enVenta, setEnVenta] = useState(true);
   const [stock, setStock] = useState(1);
   const [imagenes, setImagenes] = useState<File[]>([]);
@@ -44,7 +43,8 @@ export default function CrearObraForm({ usuarioId, token, onObraCreada, obraInic
     if (obraInicial) {
       setTitulo(obraInicial.titulo);
       setDescripcion(obraInicial.descripcion);
-      setPrecio(String(obraInicial.precio));
+      setPrecio(formatearMiles(String(obraInicial.precio)));
+      setPrecioNumerico(String(obraInicial.precio));
       setEnVenta(obraInicial.en_venta);
       setStock(1);
     }
@@ -81,6 +81,17 @@ export default function CrearObraForm({ usuarioId, token, onObraCreada, obraInic
     fetchContentTypeObra();
   }, [token]);
 
+  function formatearMiles(valor: string) {
+    return valor.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  const handlePrecioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let valor = e.target.value.replace(/\D/g, ""); // Solo números
+    if (valor.length > 9) valor = valor.slice(0, 9);
+    setPrecioNumerico(valor);
+    setPrecio(formatearMiles(valor));
+  };
+
   const uploadImageToCloudinary = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -95,7 +106,6 @@ export default function CrearObraForm({ usuarioId, token, onObraCreada, obraInic
     if (!res.ok) {
       throw new Error(data.error?.message || 'Error al subir imagen');
     }
-
     return data.secure_url;
   };
 
@@ -129,17 +139,25 @@ export default function CrearObraForm({ usuarioId, token, onObraCreada, obraInic
       return;
     }
 
-    if (enVenta && (!precio || Number(precio) <= 0 || !stock || stock <= 0)) {
+    if (enVenta && (!precioNumerico || Number(precioNumerico) <= 0 || !stock || stock <= 0)) {
       setError('Completa precio y stock válidos.');
       return;
     }
 
     try {
+      let imagen_url = obraInicial?.imagen_url || '';
+
+      // Si está editando y seleccionó una nueva imagen, sube la nueva imagen a Cloudinary
+      if (obraInicial && imagenes.length > 0) {
+        const nuevaImagenUrl = await uploadImageToCloudinary(imagenes[0]);
+        imagen_url = nuevaImagenUrl;
+      }
+
       const bodyObra = {
         titulo,
         descripcion,
-        precio: enVenta ? precio : 0,
-        imagen_url: obraInicial?.imagen_url || '',
+        precio: enVenta ? Number(precioNumerico) : 0,
+        imagen_url: imagen_url,
         en_venta: enVenta,
         destacada: false,
         usuario: usuarioId,
@@ -164,6 +182,7 @@ export default function CrearObraForm({ usuarioId, token, onObraCreada, obraInic
       const nuevaObra = await resObra.json();
       if (!resObra.ok) throw new Error('Error al guardar la obra');
 
+      // Si es creación, sube imágenes a Cloudinary y asocia la url principal a la obra
       if (!obraInicial && imagenes.length > 0) {
         const urlsSubidas = await Promise.all(
           imagenes.map(async (imagen) => {
@@ -203,6 +222,7 @@ export default function CrearObraForm({ usuarioId, token, onObraCreada, obraInic
       setTitulo('');
       setDescripcion('');
       setPrecio('');
+      setPrecioNumerico('');
       setCategoriaId(null);
       setImagenes([]);
       setEnVenta(true);
@@ -284,14 +304,32 @@ export default function CrearObraForm({ usuarioId, token, onObraCreada, obraInic
         </div>
       )}
 
-      {obraInicial && obraInicial.imagen_url && (
-        <div className="mb-4">
+      {obraInicial && (
+        <div>
           <p className="text-sm font-medium text-black mb-1">Imagen actual:</p>
-          <img
-            src={obraInicial.imagen_url}
-            alt="Imagen actual"
-            className="w-full h-40 object-cover rounded border"
+          {obraInicial.imagen_url && (
+            <img
+              src={obraInicial.imagen_url}
+              alt="Imagen actual"
+              className="w-full h-40 object-cover rounded border"
+            />
+          )}
+          <label className="block text-sm font-medium text-black mt-2">Cambiar imagen</label>
+          <input
+            type="file"
+            accept="image/*"
+            className="block mt-1"
+            onChange={(e) => {
+              if (e.target.files) {
+                setImagenes(Array.from(e.target.files));
+              }
+            }}
           />
+          <span className="text-black text-sm">
+            {imagenes.length > 0
+              ? `${imagenes.length} archivo(s) seleccionado(s)`
+              : 'Ningún archivo seleccionado'}
+          </span>
         </div>
       )}
 
@@ -315,12 +353,15 @@ export default function CrearObraForm({ usuarioId, token, onObraCreada, obraInic
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
               <input
-                type="number"
+                type="text"
                 placeholder="Precio"
                 value={precio}
-                onChange={(e) => setPrecio(e.target.value)}
+                onChange={handlePrecioChange}
                 className="w-full px-3 py-2 border rounded text-black"
+                inputMode="numeric"
+                maxLength={11}
                 min={0}
+                required={enVenta}
               />
             </div>
 
@@ -330,6 +371,7 @@ export default function CrearObraForm({ usuarioId, token, onObraCreada, obraInic
                 type="number"
                 placeholder="Cantidad disponible"
                 value={stock}
+                maxLength={6}
                 onChange={(e) => setStock(Number(e.target.value))}
                 className="w-full px-3 py-2 border rounded text-black"
                 min={1}
