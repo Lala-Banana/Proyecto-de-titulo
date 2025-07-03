@@ -1,7 +1,7 @@
 # urls.py (usando path personalizado para cada ViewSet)
 from django.urls import path
 from .views import (
-    CategoriaAdminDetailView, ComentariosDeObraView, CrearComentarioView, ObraAdminDetailView, ObraAdminListView, PerfilPublicoView, RegistroView, LoginView, UsuarioActualView, UsuarioAdminDetailView, UsuarioAdminListView, UsuariosPublicosView, crear_preferencia_pro, guardar_usuario_google,
+    CategoriaAdminDetailView, ComentariosDeObraView, CrearComentarioView, ObraAdminDetailView, ObraAdminListView, PerfilPublicoView, RegistroView, LoginView, UsuarioActualView, UsuarioAdminDetailView, UsuarioAdminListView, UsuariosPublicosView, buscar_obras, crear_preferencia_pro, guardar_usuario_google,
     CategoriaListCreateView, CategoriaDetailView,
     ObraListCreateView, ObraDetailView,
     CompraListCreateView, CompraDetailView,
@@ -96,6 +96,6 @@ urlpatterns = [
     path('usuarios/<int:usuario_id>/is-following/', is_following_view, name='is-following'),
     path('usuarios/<int:usuario_id>/toggle-follow/', toggle_follow_view, name='toggle-follow'),
     path('pagos/webhook/', mp_webhook),   # <-- tu webhook
-
+    path('obras/buscar/', buscar_obras, name='buscar-obras'),
 
 ]

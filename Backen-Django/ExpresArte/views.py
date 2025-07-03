@@ -19,7 +19,10 @@ from .serializers import UsuarioPublicoSerializer
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.exceptions import NotFound
-from django.db import connection
+from django.db import connection 
+# views.py
+from django.db.models import Q  # ✅ correcto
+
 from django.core.exceptions import PermissionDenied
 
 
@@ -627,3 +630,26 @@ def toggle_follow_view(request, usuario_id):
         is_following = True
 
     return Response({'is_following': is_following})
+
+
+@api_view(['GET'])
+
+def buscar_obras(request):
+    """
+    Endpoint para buscar obras por título, descripción o nombre del artista.
+    """
+    search = request.query_params.get('search', '')
+    permission_classes = [AllowAny]
+    if not search:
+        return Response({"error": "Debes proporcionar un parámetro de búsqueda (?search=...)"},
+                        status=400)
+
+    obras = Obra.objects.filter(
+        Q(titulo__icontains=search) |
+        Q(descripcion__icontains=search) |
+        Q(usuario__nombre__icontains=search),
+        en_venta=True
+    )
+
+    serializer = ObraSerializer(obras, many=True)
+    return Response(serializer.data)

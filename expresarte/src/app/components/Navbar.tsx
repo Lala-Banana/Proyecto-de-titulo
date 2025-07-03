@@ -8,7 +8,7 @@ import { useAuthUniversal } from '@/hooks/useAuthUniversal';
 import { FaBars } from 'react-icons/fa';
 
 interface Props {
-  onToggleSidebar?: () => void; // solo se usa en el admin
+  onToggleSidebar?: () => void;
 }
 
 const Navbar = ({ onToggleSidebar }: Props) => {
@@ -18,7 +18,6 @@ const Navbar = ({ onToggleSidebar }: Props) => {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
-  // Cierra el dropdown si se hace clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -43,7 +42,6 @@ const Navbar = ({ onToggleSidebar }: Props) => {
     <nav className="fixed top-0 left-0 w-full bg-white z-50 shadow">
       <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center gap-4">
-          {/* Botón sidebar en admin (solo se muestra si existe prop) */}
           {onToggleSidebar && (
             <button
               onClick={onToggleSidebar}
@@ -53,7 +51,6 @@ const Navbar = ({ onToggleSidebar }: Props) => {
             </button>
           )}
 
-          {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <Image
               src="https://plus.unsplash.com/premium_vector-1718634329496-83c7a9db4913?q=80&w=2650&auto=format&fit=crop"
@@ -65,7 +62,7 @@ const Navbar = ({ onToggleSidebar }: Props) => {
           </Link>
         </div>
 
-        {/* enlaces + buscador (solo en pantallas ≥ md) */}
+        {/* Enlaces + Buscador Desktop */}
         <div className="hidden md:flex items-center gap-4">
           <Link href="/categorias" className="text-black hover:underline text-sm">
             Categorías
@@ -76,9 +73,26 @@ const Navbar = ({ onToggleSidebar }: Props) => {
           <Link href="/usuarios" className="text-black hover:underline text-sm">
             Usuarios
           </Link>
+
+          {/* Buscador */}
+          <form onSubmit={handleSearchSubmit} className="ml-4 flex">
+            <input
+              type="text"
+              placeholder="Buscar obras..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border text-black rounded-l px-3 py-1 text-sm"
+            />
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-3 py-1 rounded-r text-sm hover:bg-black"
+            >
+              Buscar
+            </button>
+          </form>
         </div>
 
-        {/* Usuario o botones de sesión */}
+        {/* Usuario / Sesión */}
         <div className="relative flex items-center gap-4 bg-gray-100 rounded-full px-2 py-1">
           {user ? (
             <>
@@ -99,7 +113,6 @@ const Navbar = ({ onToggleSidebar }: Props) => {
                   ref={dropdownRef}
                   className="absolute right-0 top-full mt-2 w-56 bg-white border rounded-md shadow-lg text-black z-50"
                 >
-                  {/* Info usuario */}
                   <div className="p-4 border-b">
                     <p className="text-sm font-semibold">{user.nombre}</p>
                     <p className="text-xs text-gray-500">{user.email}</p>
@@ -139,7 +152,7 @@ const Navbar = ({ onToggleSidebar }: Props) => {
                     </li>
                   </ul>
 
-                  {/* Enlaces + buscador (solo móviles) */}
+                  {/* Enlaces + Buscador Mobile */}
                   <div className="md:hidden px-4 py-3 flex flex-col gap-2">
                     <Link href="/categorias" onClick={() => setDropdownOpen(false)} className="text-sm hover:underline">
                       Categorías
@@ -155,8 +168,21 @@ const Navbar = ({ onToggleSidebar }: Props) => {
                         handleSearchSubmit(e);
                         setDropdownOpen(false);
                       }}
-                      className="mt-2"
+                      className="mt-2 flex"
                     >
+                      <input
+                        type="text"
+                        placeholder="Buscar obras..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="border rounded-l px-3 py-1 w-full text-sm"
+                      />
+                      <button
+                        type="submit"
+                        className="bg-blue-600 text-white px-3 py-1 rounded-r text-sm hover:bg-blue-700"
+                      >
+                        Buscar
+                      </button>
                     </form>
                   </div>
                 </div>
